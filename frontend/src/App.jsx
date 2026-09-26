@@ -341,7 +341,7 @@ export default function App() {
           <div>
             <h2 className="text-3xl font-bold text-slate-900 mb-8">My Dashboard</h2>
             
-            <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center"><CheckDouble className="text-emerald-500 mr-2" /> Completed Courses</h3>
+            <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center"><CheckCheck className="text-emerald-500 mr-2" /> Completed Courses</h3>
             <div className="space-y-4 mb-10">
               {catalog.filter(c => interactions.completed.includes(c.id)).length === 0 && <p className="text-slate-500 italic">No courses completed yet.</p>}
               {catalog.filter(c => interactions.completed.includes(c.id)).map(rec => (
