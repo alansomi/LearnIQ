@@ -53,8 +53,8 @@
                 <span class="font-bold text-xl tracking-tight text-slate-900">LearnIQ</span>
             </div>
             <div class="flex items-center space-x-4">
-                <a href="#" class="text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition">Catalog</a>
-                <a href="#" class="text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition">My Path</a>
+                <button onclick="switchView('catalog')" id="nav-catalog" class="text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition">Catalog</button>
+                <button onclick="switchView('mypath')" id="nav-mypath" class="text-brand-600 px-3 py-2 text-sm font-medium transition border-b-2 border-brand-600">My Path</button>
                 <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold ml-4">
                     <i class="fa-regular fa-user"></i>
                 </div>
@@ -63,8 +63,8 @@
     </div>
 </nav>
 
-<!-- Hero Section -->
-<div class="bg-slate-900 text-white">
+<!-- Hero Section (Only visible on My Path) -->
+<div id="hero-section" class="bg-slate-900 text-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
         <div class="md:w-2/3">
             <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Accelerate Your Career</h1>
@@ -74,9 +74,10 @@
 </div>
 
 <!-- Main Application Area -->
-<main class="flex-grow -mt-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-16">
-    <div class="flex flex-col lg:flex-row gap-8">
-        
+<main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-16">
+    
+    <!-- VIEW: MY PATH -->
+    <div id="view-mypath" class="-mt-8 flex flex-col lg:flex-row gap-8">
         <!-- Left Column: Discovery Profile -->
         <div class="w-full lg:w-1/3">
             <div class="glass-panel rounded-xl shadow-lg p-6 relative">
@@ -142,13 +143,6 @@
                         <div class="h-3 w-full shimmer rounded"></div>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex gap-4 h-36">
-                    <div class="w-1/4 h-full shimmer rounded-lg"></div>
-                    <div class="w-3/4 flex flex-col justify-between">
-                        <div><div class="h-5 w-3/4 shimmer rounded mb-2"></div><div class="h-4 w-1/4 shimmer rounded"></div></div>
-                        <div class="h-3 w-full shimmer rounded"></div>
-                    </div>
-                </div>
             </div>
 
             <!-- Feed -->
@@ -163,12 +157,90 @@
             </div>
         </div>
     </div>
+
+    <!-- VIEW: CATALOG -->
+    <div id="view-catalog" class="hidden pt-8">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-3xl font-bold text-slate-900">Full Course Catalog</h2>
+            <button onclick="loadCatalog()" class="text-brand-600 hover:text-brand-800 text-sm font-medium"><i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh</button>
+        </div>
+        
+        <div id="catalog-loading" class="hidden space-y-4">
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm h-24 shimmer"></div>
+            <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm h-24 shimmer"></div>
+        </div>
+
+        <div id="catalog-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Catalog items go here -->
+        </div>
+    </div>
 </main>
 
 <script>
     const API_BASE = "https://learniq-765n.onrender.com";
     let currentStudentId = null;
 
+    // View Switching Logic
+    function switchView(viewName) {
+        document.getElementById('view-mypath').classList.add('hidden');
+        document.getElementById('view-catalog').classList.add('hidden');
+        document.getElementById('hero-section').classList.add('hidden');
+        
+        document.getElementById('nav-mypath').className = "text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition";
+        document.getElementById('nav-catalog').className = "text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition";
+
+        if (viewName === 'mypath') {
+            document.getElementById('view-mypath').classList.remove('hidden');
+            document.getElementById('hero-section').classList.remove('hidden');
+            document.getElementById('nav-mypath').className = "text-brand-600 px-3 py-2 text-sm font-medium transition border-b-2 border-brand-600";
+        } else if (viewName === 'catalog') {
+            document.getElementById('view-catalog').classList.remove('hidden');
+            document.getElementById('nav-catalog').className = "text-brand-600 px-3 py-2 text-sm font-medium transition border-b-2 border-brand-600";
+            loadCatalog();
+        }
+    }
+
+    // Catalog Logic
+    async function loadCatalog() {
+        const container = document.getElementById('catalog-container');
+        container.innerHTML = '';
+        document.getElementById('catalog-loading').classList.remove('hidden');
+
+        try {
+            const res = await fetch(`${API_BASE}/resources?limit=100`);
+            const resources = await res.json();
+            document.getElementById('catalog-loading').classList.add('hidden');
+            
+            resources.forEach(rec => {
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition";
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-2xl">${getIconForType(rec.type)}</span>
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">${rec.type}</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2 leading-tight">${rec.title}</h3>
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">${rec.topic}</span>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">${rec.difficulty}</span>
+                        </div>
+                        <p class="text-slate-600 text-sm mb-4 line-clamp-3">${rec.description}</p>
+                    </div>
+                    <a href="${rec.url}" target="_blank" class="text-center w-full bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200 font-medium py-2 px-4 rounded-lg transition text-sm">
+                        View Content ↗
+                    </a>
+                `;
+                container.appendChild(card);
+            });
+        } catch (error) {
+            console.error(error);
+            document.getElementById('catalog-loading').classList.add('hidden');
+            container.innerHTML = `<p class="text-red-500">Failed to load catalog.</p>`;
+        }
+    }
+
+    // Recommendations Logic (My Path)
     document.getElementById('profile-form').addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -207,7 +279,7 @@
                     <i class="fa-solid fa-circle-exclamation mt-0.5 mr-3"></i>
                     <div>
                         <h4 class="font-semibold">Connection Error</h4>
-                        <p class="text-sm mt-1">Unable to connect to the backend engine. Ensure the FastAPI server is running.</p>
+                        <p class="text-sm mt-1">Unable to connect to the backend engine.</p>
                     </div>
                 </div>`;
         }
