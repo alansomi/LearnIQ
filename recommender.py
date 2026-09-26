@@ -53,10 +53,17 @@ class ContentBasedRecommender:
         boost = pd.Series(1.0, index=self.df["id"])
         if skill_level:
             same_level = (self._id_index["difficulty"] == skill_level).reindex(scores.index)
-            boost[same_level] *= 1.15
+            # Give a 20% boost to matching difficulty
+            boost[same_level] *= 1.20
+            # Slight penalty to non-matching difficulty
+            boost[~same_level] *= 0.80
+            
         if preferred_type:
             same_type = (self._id_index["type"] == preferred_type).reindex(scores.index)
-            boost[same_type] *= 1.15
+            # Massive boost to the preferred format
+            boost[same_type] *= 3.0
+            # Massive penalty to non-preferred formats so they only show if nothing else exists
+            boost[~same_type] *= 0.1
 
         scores = scores * boost
         if scores.max() > 0:
