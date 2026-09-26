@@ -1,0 +1,8 @@
+{
+  "trained_at": "20260923T053043123299Z",
+  "model_file": "hybrid_model_20260923T053043123299Z.joblib",
+  "n_resources": 27,
+  "n_interactions": 85,
+  "n_students_with_interactions": 13,
+  "train_seconds": 0.02
+}

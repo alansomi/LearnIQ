@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnIQ - Professional Learning</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdfa',
+                            100: '#ccfbf1',
+                            500: '#14b8a6',
+                            600: '#0d9488',
+                            900: '#134e4a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .shimmer {
+            animation: shimmer 2s linear infinite;
+            background: linear-gradient(to right, #f6f7f8 4%, #edeef1 25%, #f6f7f8 36%);
+            background-size: 1000px 100%;
+        }
+        @keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen">
+
+<!-- Top Navigation -->
+<nav class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16">
+            <div class="flex items-center">
+                <i class="fa-solid fa-graduation-cap text-brand-600 text-2xl mr-3"></i>
+                <span class="font-bold text-xl tracking-tight text-slate-900">LearnIQ</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="#" class="text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition">Catalog</a>
+                <a href="#" class="text-slate-500 hover:text-slate-900 px-3 py-2 text-sm font-medium transition">My Path</a>
+                <div class="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 font-bold ml-4">
+                    <i class="fa-regular fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<div class="bg-slate-900 text-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-20">
+        <div class="md:w-2/3">
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Accelerate Your Career</h1>
+            <p class="text-lg text-slate-300 mb-8 max-w-2xl">Tell us your goals, and our intelligent engine will curate a personalized learning path from the world's best educational content.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Main Application Area -->
+<main class="flex-grow -mt-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-16">
+    <div class="flex flex-col lg:flex-row gap-8">
+        
+        <!-- Left Column: Discovery Profile -->
+        <div class="w-full lg:w-1/3">
+            <div class="glass-panel rounded-xl shadow-lg p-6 relative">
+                <div class="absolute top-0 left-0 w-full h-1 bg-brand-500 rounded-t-xl"></div>
+                <h2 class="text-xl font-bold text-slate-800 mb-1">Learning Profile</h2>
+                <p class="text-sm text-slate-500 mb-6">Customize your educational journey.</p>
+                
+                <form id="profile-form" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Full Name</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                                <i class="fa-regular fa-id-card"></i>
+                            </div>
+                            <input type="text" id="name" required class="pl-10 block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm border p-2.5 transition" placeholder="e.g. Jane Doe">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Current Expertise</label>
+                        <select id="skill_level" class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm border p-2.5 bg-white">
+                            <option>Beginner</option>
+                            <option>Intermediate</option>
+                            <option>Advanced</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Primary Objective</label>
+                        <textarea id="interest" required class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm border p-3 transition" rows="3" placeholder="What specific skills or tools are you trying to master?"></textarea>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Preferred Format</label>
+                        <select id="preferred_type" class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 sm:text-sm border p-2.5 bg-white">
+                            <option>Video</option>
+                            <option>Article</option>
+                            <option>Tutorial</option>
+                            <option>Project</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition mt-2">
+                        Discover Content
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Results -->
+        <div class="w-full lg:w-2/3 mt-8 lg:mt-0">
+            <div class="flex items-center justify-between mb-6 px-2">
+                <h2 class="text-2xl font-bold text-slate-800" id="recs-title">Curated For You</h2>
+                <span class="text-sm text-slate-500 flex items-center"><i class="fa-solid fa-bolt text-amber-400 mr-1.5"></i> AI Matched</span>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loading" class="hidden space-y-4">
+                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex gap-4 h-36">
+                    <div class="w-1/4 h-full shimmer rounded-lg"></div>
+                    <div class="w-3/4 flex flex-col justify-between">
+                        <div><div class="h-5 w-3/4 shimmer rounded mb-2"></div><div class="h-4 w-1/4 shimmer rounded"></div></div>
+                        <div class="h-3 w-full shimmer rounded"></div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-5 border border-slate-200 shadow-sm flex gap-4 h-36">
+                    <div class="w-1/4 h-full shimmer rounded-lg"></div>
+                    <div class="w-3/4 flex flex-col justify-between">
+                        <div><div class="h-5 w-3/4 shimmer rounded mb-2"></div><div class="h-4 w-1/4 shimmer rounded"></div></div>
+                        <div class="h-3 w-full shimmer rounded"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Feed -->
+            <div id="recommendations-container" class="space-y-5">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-10 text-center flex flex-col items-center justify-center text-slate-500">
+                    <div class="h-16 w-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-magnifying-glass text-2xl text-slate-400"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-slate-900 mb-1">Your feed is empty</h3>
+                    <p>Complete your learning profile on the left to generate your personalized curriculum.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const API_BASE = "http://127.0.0.1:8000";
+    let currentStudentId = null;
+
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        document.getElementById('recommendations-container').innerHTML = '';
+        document.getElementById('loading').classList.remove('hidden');
+        
+        const studentData = {
+            name: document.getElementById('name').value,
+            skill_level: document.getElementById('skill_level').value,
+            interest: document.getElementById('interest').value,
+            preferred_type: document.getElementById('preferred_type').value,
+        };
+
+        try {
+            const studentRes = await fetch(`${API_BASE}/students`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(studentData)
+            });
+            const studentResult = await studentRes.json();
+            currentStudentId = studentResult.student_id;
+            
+            document.getElementById('recs-title').innerText = `${studentData.name}'s Curriculum`;
+
+            const recsRes = await fetch(`${API_BASE}/recommendations/${currentStudentId}?top_n=5`);
+            const recsResult = await recsRes.json();
+
+            document.getElementById('loading').classList.add('hidden');
+            renderRecommendations(recsResult.recommendations);
+            
+        } catch (error) {
+            console.error("Error:", error);
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('recommendations-container').innerHTML = 
+                `<div class="bg-red-50 text-red-700 p-5 rounded-xl border border-red-100 flex items-start">
+                    <i class="fa-solid fa-circle-exclamation mt-0.5 mr-3"></i>
+                    <div>
+                        <h4 class="font-semibold">Connection Error</h4>
+                        <p class="text-sm mt-1">Unable to connect to the backend engine. Ensure the FastAPI server is running.</p>
+                    </div>
+                </div>`;
+        }
+    });
+
+    function getIconForType(type) {
+        const types = {
+            'Video': '<i class="fa-solid fa-play text-red-500"></i>',
+            'Article': '<i class="fa-regular fa-file-lines text-blue-500"></i>',
+            'Tutorial': '<i class="fa-solid fa-laptop-code text-purple-500"></i>',
+            'Project': '<i class="fa-solid fa-hammer text-amber-600"></i>'
+        };
+        return types[type] || '<i class="fa-solid fa-book"></i>';
+    }
+
+    function renderRecommendations(recommendations) {
+        const container = document.getElementById('recommendations-container');
+        container.innerHTML = '';
+
+        if (recommendations.length === 0) {
+            container.innerHTML = `
+                <div class="bg-slate-50 text-slate-600 p-6 rounded-xl border border-slate-200 text-center">
+                    No exact matches found. Try broadening your objectives!
+                </div>`;
+            return;
+        }
+
+        recommendations.forEach(rec => {
+            const matchScore = Math.round(rec.score * 100);
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-md transition duration-200 flex flex-col md:flex-row group";
+            
+            card.innerHTML = `
+                <!-- Left Visual Area -->
+                <div class="w-full md:w-1/4 bg-slate-50 flex flex-col items-center justify-center p-6 border-b md:border-b-0 md:border-r border-slate-100 relative">
+                    <div class="text-4xl mb-3 opacity-80 group-hover:scale-110 transition duration-300">
+                        ${getIconForType(rec.type)}
+                    </div>
+                    <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">${rec.type}</span>
+                    
+                    <div class="absolute top-3 left-3">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-800">
+                            ${matchScore}% Match
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Right Content Area -->
+                <div class="w-full md:w-3/4 p-6 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-1">
+                            <h3 class="text-lg font-bold text-slate-900 leading-tight">${rec.title}</h3>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs text-slate-500 mb-3 font-medium">
+                            <span class="flex items-center"><i class="fa-solid fa-signal mr-1.5 opacity-70"></i> ${rec.difficulty}</span>
+                            <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                            <span class="flex items-center"><i class="fa-solid fa-tag mr-1.5 opacity-70"></i> ${rec.topic}</span>
+                            <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                            <span class="flex items-center"><i class="fa-solid fa-building mr-1.5 opacity-70"></i> ${rec.source || 'Platform'}</span>
+                        </div>
+                        <p class="text-slate-600 text-sm mb-5 line-clamp-2">${rec.description}</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-2 pt-4 border-t border-slate-100">
+                        <a href="${rec.url}" target="_blank" onclick="logInteraction('${rec.id}', 'Clicked')" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-brand-600 hover:bg-brand-700 focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition shadow-sm">
+                            Launch Content
+                        </a>
+                        <button onclick="logInteraction('${rec.id}', 'Liked', this)" class="inline-flex items-center justify-center px-4 py-2 border border-slate-200 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:text-rose-600 hover:border-rose-200 focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition shadow-sm">
+                            <i class="fa-regular fa-heart mr-1.5"></i> Save
+                        </button>
+                        <button onclick="logInteraction('${rec.id}', 'Completed', this)" class="inline-flex items-center justify-center px-4 py-2 border border-slate-200 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 hover:text-emerald-600 hover:border-emerald-200 focus:ring-2 focus:ring-offset-2 focus:ring-slate-200 transition shadow-sm">
+                            <i class="fa-solid fa-check mr-1.5"></i> Mark Done
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    async function logInteraction(resourceId, type, buttonElement = null) {
+        if (!currentStudentId) return;
+        
+        try {
+            await fetch(`${API_BASE}/interactions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    student_id: currentStudentId,
+                    resource_id: resourceId,
+                    interaction_type: type
+                })
+            });
+            
+            if (buttonElement) {
+                if (type === 'Liked') {
+                    buttonElement.innerHTML = '<i class="fa-solid fa-heart mr-1.5"></i> Saved';
+                    buttonElement.classList.replace('text-slate-700', 'text-rose-600');
+                    buttonElement.classList.add('bg-rose-50', 'border-rose-200');
+                } else if (type === 'Completed') {
+                    buttonElement.innerHTML = '<i class="fa-solid fa-check-double mr-1.5"></i> Completed';
+                    buttonElement.classList.replace('text-slate-700', 'text-emerald-600');
+                    buttonElement.classList.add('bg-emerald-50', 'border-emerald-200');
+                }
+                buttonElement.disabled = true;
+                buttonElement.classList.add('opacity-70', 'cursor-not-allowed');
+            }
+        } catch (error) {
+            console.error("Error logging interaction:", error);
+        }
+    }
+</script>
+</body>
+</html>
