@@ -6,12 +6,21 @@ const API_BASE = "https://learniq-765n.onrender.com"
 export default function App() {
   const [view, setView] = useState('mypath')
   const [profile, setProfile] = useState(() => {
-    const saved = localStorage.getItem('learniq_profile')
-    return saved ? JSON.parse(saved) : null
+    try {
+      const saved = localStorage.getItem('learniq_profile')
+      return saved && saved !== "undefined" ? JSON.parse(saved) : null
+    } catch {
+      return null
+    }
   })
   const [interactions, setInteractions] = useState(() => {
-    const saved = localStorage.getItem('learniq_interactions')
-    return saved ? JSON.parse(saved) : { saved: [], completed: [] }
+    try {
+      const saved = localStorage.getItem('learniq_interactions')
+      const parsed = saved && saved !== "undefined" ? JSON.parse(saved) : null
+      return parsed && parsed.saved && parsed.completed ? parsed : { saved: [], completed: [] }
+    } catch {
+      return { saved: [], completed: [] }
+    }
   })
   
   // Save interactions to local storage whenever they change
@@ -133,7 +142,7 @@ export default function App() {
           </div>
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{rec.type}</span>
           
-          {matchScore && (
+          {matchScore !== undefined && !isNaN(matchScore) && (
             <div className="absolute top-3 left-3">
               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-brand-100 text-brand-800">
                 {matchScore}% Match
@@ -200,9 +209,13 @@ export default function App() {
               <NavButton name="My Path" id="mypath" />
               <NavButton name="Catalog" id="catalog" />
               <NavButton name="Dashboard" id="dashboard" />
-              <div className="h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 ml-2 md:ml-4 flex-shrink-0 cursor-pointer" onClick={() => { localStorage.clear(); window.location.reload(); }} title="Click to logout/reset profile">
-                <User className="w-4 h-4" />
-              </div>
+              <button 
+                onClick={() => { localStorage.clear(); window.location.reload(); }} 
+                className="ml-2 md:ml-4 text-xs font-semibold text-rose-600 hover:text-rose-800 border border-rose-200 hover:bg-rose-50 px-3 py-1.5 rounded-full transition"
+                title="Reset Profile"
+              >
+                Reset Profile
+              </button>
             </div>
           </div>
         </div>
