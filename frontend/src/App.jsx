@@ -300,6 +300,7 @@ export default function App() {
   const [catalog, setCatalog] = useState([])
   const [rawBackendRecs, setRawBackendRecs] = useState([])
   const [loadingRecs, setLoadingRecs] = useState(false)
+  const [backendWakingUp, setBackendWakingUp] = useState(false)
   const [toasts, setToasts] = useState([])
 
   // Search & Filters
@@ -342,8 +343,12 @@ export default function App() {
     }, 3500)
   }
 
-  // Fetch complete catalog from Render API
+  // Fetch complete catalog from Render API (with cold-start detector)
   const fetchCatalogData = async () => {
+    const timer = setTimeout(() => {
+      setBackendWakingUp(true)
+    }, 2200)
+
     try {
       const res = await fetch(`${API_BASE}/resources?limit=300`)
       if (res.ok) {
@@ -352,15 +357,28 @@ export default function App() {
       }
     } catch (err) {
       console.error("Error fetching catalog:", err)
+    } finally {
+      clearTimeout(timer)
+      setBackendWakingUp(false)
     }
   }
 
-  // Fetch live recommendations from Render API for a target topic/skill
+  // Fetch live recommendations from Render API with isolated student profiles
   const fetchRecommendationsForGoal = async (targetGoal, userExp, userFormat) => {
     setLoadingRecs(true)
     try {
+      let guestId = localStorage.getItem('learniq_guest_id')
+      if (!guestId) {
+        guestId = 'g_' + Math.random().toString(36).substring(2, 9)
+        localStorage.setItem('learniq_guest_id', guestId)
+      }
+
+      const studentIdentifier = currentUser?.username 
+        ? `Student_${currentUser.username}` 
+        : `Guest_${guestId}`
+
       const postData = {
-        name: currentUser?.name || 'Student',
+        name: studentIdentifier,
         skill_level: userExp || profile.experience || 'Beginner',
         interest: targetGoal || 'Machine Learning',
         preferred_type: userFormat || profile.format || 'Video'
@@ -374,6 +392,9 @@ export default function App() {
 
       if (!studRes.ok) throw new Error("Could not save student profile")
       const { student_id } = await studRes.json()
+      if (student_id) {
+        localStorage.setItem('learniq_backend_student_id', student_id)
+      }
 
       const recsRes = await fetch(`${API_BASE}/recommendations/${student_id}?top_n=20`)
       if (recsRes.ok) {
@@ -451,11 +472,15 @@ export default function App() {
     }
 
     try {
+      const sid = currentUser?.username 
+        ? `Student_${currentUser.username}` 
+        : (localStorage.getItem('learniq_backend_student_id') || 'guest_student')
+
       await fetch(`${API_BASE}/interactions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          student_id: currentUser?.username || 'guest_student',
+          student_id: sid,
           resource_id: resource.id,
           interaction_type: actionType === 'ToggleComplete' ? 'Completed' : actionType
         })
@@ -969,6 +994,15 @@ export default function App() {
         </div>
       </aside>
 
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="sidebar-backdrop"
+          onClick={() => setMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* MAIN CONTENT AREA */}
       <main className="main-content" id="mainContent">
         {/* Mobile Top Header */}
@@ -1452,6 +1486,15 @@ export default function App() {
 
                 {/* "Curated For You" Courses Grid */}
                 <section id="curatedSection" style={{ marginBottom: '3rem' }}>
+                  {backendWakingUp && catalog.length === 0 && (
+                    <div className="cloud-wakeup-banner">
+                      <div className="pulse-dot-amber" />
+                      <div>
+                        <strong>Connecting to Render Cloud &amp; Supabase DB...</strong> The free-tier backend instance is spinning up (~30-45s on first visit). Your 4-stage Career Roadmap is ready above!
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
@@ -1748,6 +1791,15 @@ export default function App() {
             {/* TAB: EXPLORE CATALOG */}
             {activeTab === 'catalog' && (
               <section className="section-recommendations">
+                {backendWakingUp && catalog.length === 0 && (
+                  <div className="cloud-wakeup-banner">
+                    <div className="pulse-dot-amber" />
+                    <div>
+                      <strong>Connecting to Render Cloud...</strong> Loading full catalog from PostgreSQL database (~30-45s cold start).
+                    </div>
+                  </div>
+                )}
+
                 <div className="catalog-toolbar">
                   <div className="catalog-search-row">
                     <div className="search-box" style={{ flex: 1 }}>
