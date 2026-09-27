@@ -16,7 +16,16 @@ const TOPIC_OPTIONS = [
   'Cloud Computing'
 ]
 
-// Preset Profiles
+// Domain Browser Categories for the Learner Platform
+const DOMAINS = [
+  { id: 'all', name: 'All Subjects', icon: '🌐', count: '300+' },
+  { id: 'ai', name: 'AI & Machine Learning', icon: '🧠', count: '120+' },
+  { id: 'python', name: 'Python Programming', icon: '🐍', count: '80+' },
+  { id: 'web', name: 'Web Development', icon: '⚡', count: '60+' },
+  { id: 'cloud', name: 'Cloud & DevOps', icon: '☁️', count: '45+' }
+]
+
+// Preset Profiles for Lab Mode
 const PRESETS = {
   genai: {
     name: 'Alex Chen',
@@ -57,8 +66,11 @@ const PRESETS = {
 }
 
 export default function App() {
-  // Navigation: 'workspace', 'catalog', 'dashboard'
-  const [activeTab, setActiveTab] = useState('workspace')
+  // Mode: 'learner' (Clean Consumer Platform) vs 'lab' (Mathematical AI Workspace)
+  const [platformMode, setPlatformMode] = useState('learner')
+
+  // Navigation tabs within active mode
+  const [activeTab, setActiveTab] = useState('home') // 'home', 'catalog', 'dashboard'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Local Storage for profile & interactions
@@ -95,7 +107,7 @@ export default function App() {
     }
   })
 
-  // Simulated & Real Signals
+  // Lab Model Signals
   const [signals, setSignals] = useState(() => {
     try {
       const saved = localStorage.getItem('learniq_signals')
@@ -110,27 +122,24 @@ export default function App() {
     }
   })
 
-  // Hybrid Model Weights & Toggles
-  const [alpha, setAlpha] = useState(0.60) // 0.0 to 1.0 (Content-Based Weight)
+  // Lab Model Controls
+  const [alpha, setAlpha] = useState(0.60)
   const [explainEnabled, setExplainEnabled] = useState(true)
   const [coldStartEnabled, setColdStartEnabled] = useState(true)
 
-  // Live Data & Loading
+  // Live Data & Loading States
   const [catalog, setCatalog] = useState([])
   const [rawBackendRecs, setRawBackendRecs] = useState([])
   const [loadingCatalog, setLoadingCatalog] = useState(false)
   const [loadingRecs, setLoadingRecs] = useState(false)
   const [toasts, setToasts] = useState([])
 
-  // Search & Filters in Recommendations and Catalog
-  const [recSearch, setRecSearch] = useState('')
-  const [recTopicFilter, setRecTopicFilter] = useState('all')
-  const [recSortBy, setRecSortBy] = useState('hybrid')
-
-  const [catSearch, setCatSearch] = useState('')
-  const [catTopicFilter, setCatTopicFilter] = useState('all')
-  const [catTypeFilter, setCatTypeFilter] = useState('all')
-  const [catDifficultyFilter, setCatDifficultyFilter] = useState('all')
+  // Search & Filters
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedDomain, setSelectedDomain] = useState('all')
+  const [selectedFormat, setSelectedFormat] = useState('all')
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all')
+  const [sortBy, setSortBy] = useState('match')
 
   // Save changes to localStorage
   useEffect(() => {
@@ -139,7 +148,6 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('learniq_interactions', JSON.stringify(interactions))
-    // Keep signals in sync with real actions
     setSignals(prev => ({
       ...prev,
       saved: Math.max(prev.saved, interactions.saved.length),
@@ -180,7 +188,6 @@ export default function App() {
   const fetchBackendRecommendations = async (studentProfile) => {
     setLoadingRecs(true)
     try {
-      // 1. Ensure student profile exists in backend DB
       const postData = {
         name: studentProfile.name || 'Learner',
         skill_level: studentProfile.experience || 'Intermediate',
@@ -199,16 +206,15 @@ export default function App() {
       if (!studRes.ok) throw new Error("Could not save student profile")
       const { student_id } = await studRes.json()
 
-      // 2. Query recommendations endpoint
       const recsRes = await fetch(`${API_BASE}/recommendations/${student_id}?top_n=20`)
       if (recsRes.ok) {
         const data = await recsRes.json()
         setRawBackendRecs(data.recommendations || [])
-        showToast("AI Recommendations updated from live model!", "success")
+        showToast("Recommendations updated!", "success")
       }
     } catch (err) {
       console.error("Recommendation fetch error:", err)
-      showToast("Live engine sleeping or reconnecting. Using catalog fallback.", "info")
+      showToast("Connected via cloud catalog fallback.", "info")
     } finally {
       setLoadingRecs(false)
     }
@@ -220,7 +226,7 @@ export default function App() {
     fetchBackendRecommendations(profile)
   }, [])
 
-  // Log action (Launch Content, Save, Mark Done)
+  // User Actions (Launch, Save, Complete)
   const handleAction = async (resource, actionType) => {
     if (actionType === 'Liked') {
       const alreadySaved = interactions.saved.includes(resource.id)
@@ -229,7 +235,7 @@ export default function App() {
         ...prev,
         saved: [...new Set([...prev.saved, resource.id])]
       }))
-      showToast(`Saved "${resource.title.slice(0, 30)}..." to your Dashboard`, 'success')
+      showToast(`Saved "${resource.title.slice(0, 30)}..." to your Learning Wishlist`, 'success')
     } else if (actionType === 'Completed') {
       const alreadyDone = interactions.completed.includes(resource.id)
       if (alreadyDone) return
@@ -239,10 +245,9 @@ export default function App() {
       }))
       showToast(`Marked "${resource.title.slice(0, 30)}..." as Completed!`, 'success')
     } else if (actionType === 'Clicked') {
-      showToast(`Opening course external content...`, 'info')
+      showToast(`Launching course content...`, 'info')
     }
 
-    // Push interaction to live Render backend
     try {
       await fetch(`${API_BASE}/interactions`, {
         method: 'POST',
@@ -258,7 +263,7 @@ export default function App() {
     }
   }
 
-  // Handle Steppers
+  // Steppers for Lab Mode
   const adjustSignal = (signalKey, delta) => {
     setSignals(prev => {
       const nextVal = Math.max(0, (prev[signalKey] || 0) + delta)
@@ -276,7 +281,7 @@ export default function App() {
     })
   }
 
-  // Load Preset
+  // Load Preset (for Lab Mode)
   const loadPreset = (presetKey) => {
     const p = PRESETS[presetKey]
     if (!p) return
@@ -325,24 +330,20 @@ export default function App() {
     return score
   }, [profile])
 
-  // DYNAMIC RECOMMENDATIONS HYBRID SCORING ENGINE (H = α · CB + (1 − α) · CF)
+  // Dynamic Recommendation Hybrid Calculation
   const computedRecommendations = useMemo(() => {
-    // If backend recommendations are available, we enrich them; otherwise we score the catalog directly
     const pool = rawBackendRecs.length > 0 ? rawBackendRecs : catalog
-
     if (!pool || pool.length === 0) return []
 
     const userTopics = profile.topics || []
     const preferredFormat = profile.format || 'Video'
     const userExp = profile.experience || 'Intermediate'
 
-    return pool.map((item, idx) => {
-      // 1. Content-Based Score (CB): 0 to 100
-      let cb = 70.0 // baseline
+    return pool.map((item) => {
+      let cb = 72.0
       if (item.score !== undefined) {
         cb = Math.min(100, Math.max(35, Math.round(item.score * 100)))
       } else {
-        // Deterministic content matching against profile facets
         const titleAndDesc = (item.title + ' ' + (item.description || '') + ' ' + (item.topic || '')).toLowerCase()
         let topicMatches = 0
         userTopics.forEach(t => {
@@ -362,21 +363,17 @@ export default function App() {
       }
       cb = Math.min(99.0, Math.max(30.0, cb))
 
-      // 2. Collaborative Filtering Score (CF): 0 to 100
-      // Based on item rating and peer learning signals
       const baseRating = item.rating ? (item.rating / 5.0) * 80.0 : 75.0
       const signalAffinity = Math.min(20.0, (signals.completed * 1.5 + signals.saved * 1.0 + signals.ratings * 1.2 + signals.sessions * 0.8))
       let cf = baseRating + (signalAffinity * 0.5)
       cf = Math.min(98.0, Math.max(35.0, cf))
 
-      // 3. Cold Start Modifier
       let coldStartBoost = 0
       const isNewResource = item.source === 'Dev.to' || (item.id && String(item.id).startsWith('res-new'))
       if (coldStartEnabled && isNewResource) {
         coldStartBoost = 4.5
       }
 
-      // 4. Mathematical Hybrid Score: H = α · CB + (1 − α) · CF + ColdStart
       const weightedCb = alpha * cb
       const weightedCf = (1 - alpha) * cf
       const hybridScore = Math.min(100.0, Math.round((weightedCb + weightedCf + coldStartBoost) * 10) / 10)
@@ -389,75 +386,65 @@ export default function App() {
         weightedCf: Math.round(weightedCf * 10) / 10,
         coldStartBoost,
         hybridScore,
+        matchPercentage: Math.min(99, Math.max(65, Math.round(hybridScore))),
         isNew: isNewResource
       }
     })
   }, [rawBackendRecs, catalog, profile, signals, alpha, coldStartEnabled])
 
-  // Filter & Sort Recommendations
-  const filteredRecommendations = useMemo(() => {
-    let result = [...computedRecommendations]
+  // Filtered recommendations for Learner Platform and Catalog
+  const filteredCourses = useMemo(() => {
+    let pool = activeTab === 'catalog' ? catalog : computedRecommendations
 
-    // Search query filter
-    if (recSearch.trim()) {
-      const q = recSearch.toLowerCase()
-      result = result.filter(r =>
-        (r.title && r.title.toLowerCase().includes(q)) ||
-        (r.description && r.description.toLowerCase().includes(q)) ||
-        (r.topic && r.topic.toLowerCase().includes(q)) ||
-        (r.tags && r.tags.toLowerCase().includes(q))
-      )
-    }
-
-    // Topic pill filter
-    if (recTopicFilter !== 'all') {
-      result = result.filter(r =>
-        (r.topic && r.topic.toLowerCase() === recTopicFilter.toLowerCase()) ||
-        (r.tags && r.tags.toLowerCase().includes(recTopicFilter.toLowerCase()))
-      )
-    }
-
-    // Sorting
-    if (recSortBy === 'hybrid') {
-      result.sort((a, b) => b.hybridScore - a.hybridScore)
-    } else if (recSortBy === 'cb') {
-      result.sort((a, b) => b.cbScore - a.cbScore)
-    } else if (recSortBy === 'cf') {
-      result.sort((a, b) => b.cfScore - a.cfScore)
-    }
-
-    return result
-  }, [computedRecommendations, recSearch, recTopicFilter, recSortBy])
-
-  // Filtered Catalog Items
-  const filteredCatalog = useMemo(() => {
-    let list = [...catalog]
-
-    if (catSearch.trim()) {
-      const q = catSearch.toLowerCase()
-      list = list.filter(c =>
+    // Search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      pool = pool.filter(c =>
         (c.title && c.title.toLowerCase().includes(q)) ||
         (c.description && c.description.toLowerCase().includes(q)) ||
         (c.topic && c.topic.toLowerCase().includes(q))
       )
     }
 
-    if (catTopicFilter !== 'all') {
-      list = list.filter(c => c.topic && c.topic.toLowerCase().includes(catTopicFilter.toLowerCase()))
+    // Domain / Topic Filter
+    if (selectedDomain !== 'all') {
+      if (selectedDomain === 'ai') {
+        pool = pool.filter(c => ['Machine Learning', 'Generative AI', 'Deep Learning', 'Computer Vision', 'NLP'].some(t => c.topic?.toLowerCase().includes(t.toLowerCase())))
+      } else if (selectedDomain === 'python') {
+        pool = pool.filter(c => c.topic?.toLowerCase().includes('python'))
+      } else if (selectedDomain === 'web') {
+        pool = pool.filter(c => c.topic?.toLowerCase().includes('web') || c.topic?.toLowerCase().includes('react') || c.topic?.toLowerCase().includes('node'))
+      } else if (selectedDomain === 'cloud') {
+        pool = pool.filter(c => c.topic?.toLowerCase().includes('cloud') || c.topic?.toLowerCase().includes('aws') || c.topic?.toLowerCase().includes('mlops'))
+      } else {
+        pool = pool.filter(c => c.topic?.toLowerCase().includes(selectedDomain.toLowerCase()))
+      }
     }
 
-    if (catTypeFilter !== 'all') {
-      list = list.filter(c => c.type && c.type.toLowerCase() === catTypeFilter.toLowerCase())
+    // Format Filter
+    if (selectedFormat !== 'all') {
+      pool = pool.filter(c => c.type && c.type.toLowerCase() === selectedFormat.toLowerCase())
     }
 
-    if (catDifficultyFilter !== 'all') {
-      list = list.filter(c => c.difficulty && c.difficulty.toLowerCase() === catDifficultyFilter.toLowerCase())
+    // Difficulty Filter
+    if (selectedDifficulty !== 'all') {
+      pool = pool.filter(c => c.difficulty && c.difficulty.toLowerCase() === selectedDifficulty.toLowerCase())
     }
 
-    return list
-  }, [catalog, catSearch, catTopicFilter, catTypeFilter, catDifficultyFilter])
+    // Sorting
+    let result = [...pool]
+    if (sortBy === 'match') {
+      result.sort((a, b) => (b.hybridScore || 0) - (a.hybridScore || 0))
+    } else if (sortBy === 'rating') {
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0))
+    } else if (sortBy === 'title') {
+      result.sort((a, b) => (a.title || '').localeCompare(b.title || ''))
+    }
 
-  // Saved & Completed Lists
+    return result
+  }, [computedRecommendations, catalog, activeTab, searchQuery, selectedDomain, selectedFormat, selectedDifficulty, sortBy])
+
+  // Saved & Completed
   const savedCourses = useMemo(() => {
     return catalog.filter(c => interactions.saved.includes(c.id))
   }, [catalog, interactions.saved])
@@ -469,7 +456,6 @@ export default function App() {
   const cbPercent = Math.round(alpha * 100)
   const cfPercent = Math.round((1 - alpha) * 100)
 
-  // Blend Badge Text
   const blendStatusText = useMemo(() => {
     if (alpha >= 0.75) return `Content-Led (α = ${alpha.toFixed(2)})`
     if (alpha <= 0.25) return `Collaborative-Led (α = ${alpha.toFixed(2)})`
@@ -487,7 +473,7 @@ export default function App() {
       {/* 1. SIDEBAR NAVIGATION */}
       <aside id="sidebar" className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Primary Navigation">
         <div className="sidebar-header">
-          <div className="brand-cluster" onClick={() => setActiveTab('workspace')} style={{ cursor: 'pointer' }}>
+          <div className="brand-cluster" onClick={() => { setActiveTab('home'); setPlatformMode('learner'); }} style={{ cursor: 'pointer' }}>
             <div className="brand-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
@@ -495,79 +481,167 @@ export default function App() {
             </div>
             <div>
               <h1 className="brand-title">LearnIQ</h1>
-              <p className="brand-tagline">AI Recommendation Lab</p>
+              <p className="brand-tagline">
+                {platformMode === 'learner' ? 'Intelligent Learning Platform' : 'AI Recommendation Lab'}
+              </p>
             </div>
           </div>
         </div>
 
-        <nav className="sidebar-nav">
-          <div className="nav-group-label">WORKSPACE</div>
-          <ul className="nav-list">
-            <li>
-              <a
-                href="#overview"
-                className={`nav-item ${activeTab === 'workspace' ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); setActiveTab('workspace'); setMobileMenuOpen(false); }}
-              >
-                <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="3" width="7" height="9" rx="1"></rect>
-                  <rect x="14" y="3" width="7" height="5" rx="1"></rect>
-                  <rect x="14" y="12" width="7" height="9" rx="1"></rect>
-                  <rect x="3" y="16" width="7" height="5" rx="1"></rect>
-                </svg>
-                <span>Hybrid Workspace</span>
-              </a>
-            </li>
-
-            <li>
-              <a
-                href="#catalog"
-                className={`nav-item ${activeTab === 'catalog' ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); setActiveTab('catalog'); setMobileMenuOpen(false); }}
-              >
-                <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                </svg>
-                <span>Full Catalog</span>
-                <span className="nav-badge">{catalog.length || '300+'}</span>
-              </a>
-            </li>
-
-            <li>
-              <a
-                href="#dashboard"
-                className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); setActiveTab('dashboard'); setMobileMenuOpen(false); }}
-              >
-                <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span>My Dashboard</span>
-                <span className="nav-pill pill-hybrid">{interactions.saved.length + interactions.completed.length}</span>
-              </a>
-            </li>
-          </ul>
-
-          <div className="nav-group-label">CURRICULUM PRESETS</div>
-          <div className="preset-buttons">
-            <button type="button" className="btn-preset" onClick={() => loadPreset('genai')}>
-              <span className="preset-dot dot-genai"></span>
-              <span>Generative AI Engineer</span>
+        {/* Global Platform Mode Switcher in Sidebar */}
+        <div style={{ padding: '0 1.25rem 1rem' }}>
+          <div className="mode-switcher-container" style={{ width: '100%', justifyContent: 'center' }}>
+            <button
+              type="button"
+              className={`btn-mode-tab ${platformMode === 'learner' ? 'active-learner' : ''}`}
+              style={{ flex: 1, justifyContent: 'center' }}
+              onClick={() => { setPlatformMode('learner'); setActiveTab('home'); }}
+            >
+              <span>🎓 Learner View</span>
             </button>
-            <button type="button" className="btn-preset" onClick={() => loadPreset('foundations')}>
-              <span className="preset-dot dot-foundations"></span>
-              <span>ML Fundamentals</span>
-            </button>
-            <button type="button" className="btn-preset" onClick={() => loadPreset('mlops')}>
-              <span className="preset-dot dot-mlops"></span>
-              <span>MLOps Transition</span>
-            </button>
-            <button type="button" className="btn-preset" onClick={() => loadPreset('webdev')}>
-              <span className="preset-dot dot-genai" style={{ background: '#3b82f6' }}></span>
-              <span>Web Development</span>
+            <button
+              type="button"
+              className={`btn-mode-tab ${platformMode === 'lab' ? 'active-lab' : ''}`}
+              style={{ flex: 1, justifyContent: 'center' }}
+              onClick={() => { setPlatformMode('lab'); setActiveTab('workspace'); }}
+            >
+              <span>🧪 AI Lab Mode</span>
             </button>
           </div>
+        </div>
+
+        <nav className="sidebar-nav">
+          <div className="nav-group-label">
+            {platformMode === 'learner' ? 'PLATFORM NAVIGATION' : 'WORKSPACE SECTIONS'}
+          </div>
+
+          <ul className="nav-list">
+            {platformMode === 'learner' ? (
+              <>
+                <li>
+                  <a
+                    href="#home"
+                    className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
+                    onClick={(e) => { e.preventDefault(); setActiveTab('home'); setMobileMenuOpen(false); }}
+                  >
+                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                      <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span>Discover &amp; For You</span>
+                  </a>
+                </li>
+
+                <li>
+                  <a
+                    href="#catalog"
+                    className={`nav-item ${activeTab === 'catalog' ? 'active' : ''}`}
+                    onClick={(e) => { e.preventDefault(); setActiveTab('catalog'); setMobileMenuOpen(false); }}
+                  >
+                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <span>Explore 300+ Courses</span>
+                    <span className="nav-badge">{catalog.length || '300+'}</span>
+                  </a>
+                </li>
+
+                <li>
+                  <a
+                    href="#dashboard"
+                    className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                    onClick={(e) => { e.preventDefault(); setActiveTab('dashboard'); setMobileMenuOpen(false); }}
+                  >
+                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>My Learning</span>
+                    <span className="nav-pill pill-hybrid">{interactions.saved.length + interactions.completed.length}</span>
+                  </a>
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <a
+                    href="#overview"
+                    className={`nav-item ${activeTab === 'workspace' ? 'active' : ''}`}
+                    onClick={(e) => { e.preventDefault(); setActiveTab('workspace'); setMobileMenuOpen(false); }}
+                  >
+                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="3" y="3" width="7" height="9" rx="1"></rect>
+                      <rect x="14" y="3" width="7" height="5" rx="1"></rect>
+                      <rect x="14" y="12" width="7" height="9" rx="1"></rect>
+                      <rect x="3" y="16" width="7" height="5" rx="1"></rect>
+                    </svg>
+                    <span>Hybrid Formulation</span>
+                  </a>
+                </li>
+
+                <li>
+                  <a
+                    href="#catalog"
+                    className={`nav-item ${activeTab === 'catalog' ? 'active' : ''}`}
+                    onClick={(e) => { e.preventDefault(); setActiveTab('catalog'); setMobileMenuOpen(false); }}
+                  >
+                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    <span>Full Catalog Pool</span>
+                    <span className="nav-badge">{catalog.length || '300+'}</span>
+                  </a>
+                </li>
+
+                <li>
+                  <a
+                    href="#dashboard"
+                    className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
+                    onClick={(e) => { e.preventDefault(); setActiveTab('dashboard'); setMobileMenuOpen(false); }}
+                  >
+                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+                    </svg>
+                    <span>My Dashboard</span>
+                    <span className="nav-pill pill-hybrid">{interactions.saved.length + interactions.completed.length}</span>
+                  </a>
+                </li>
+              </>
+            )}
+          </ul>
+
+          {platformMode === 'lab' && (
+            <>
+              <div className="nav-group-label">CURRICULUM PRESETS</div>
+              <div className="preset-buttons">
+                <button type="button" className="btn-preset" onClick={() => loadPreset('genai')}>
+                  <span className="preset-dot dot-genai"></span>
+                  <span>Generative AI Engineer</span>
+                </button>
+                <button type="button" className="btn-preset" onClick={() => loadPreset('foundations')}>
+                  <span className="preset-dot dot-foundations"></span>
+                  <span>ML Fundamentals</span>
+                </button>
+                <button type="button" className="btn-preset" onClick={() => loadPreset('mlops')}>
+                  <span className="preset-dot dot-mlops"></span>
+                  <span>MLOps Transition</span>
+                </button>
+                <button type="button" className="btn-preset" onClick={() => loadPreset('webdev')}>
+                  <span className="preset-dot dot-genai" style={{ background: '#3b82f6' }}></span>
+                  <span>Web Development</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {platformMode === 'learner' && (
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+              <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#38bdf8', marginBottom: '0.35rem' }}>YOUR TARGET GOAL</div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#fff' }}>{profile.goal}</div>
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.2rem' }}>Pace: {profile.weeklyTime} hrs/wk • {profile.experience}</div>
+            </div>
+          )}
         </nav>
 
         {/* Sidebar Status Panel */}
@@ -577,17 +651,17 @@ export default function App() {
             <span className="status-headline" style={{ color: '#34d399' }}>Live Engine Connected</span>
           </div>
           <p className="status-body">
-            Render FastAPI &amp; Supabase PostgreSQL are active with {catalog.length || 300}+ verified resources. Recommendations blend semantic TF-IDF with Collaborative TruncatedSVD.
+            Render Cloud &amp; Supabase DB active with {catalog.length || 300}+ verified resources.
           </p>
           <div className="status-meta">
-            <span>Model: Hybrid v2.4 (Joblib)</span>
+            <span>Server: Online (IPv4 Pooler)</span>
           </div>
         </div>
       </aside>
 
-      {/* MAIN WORKSPACE CONTENT */}
+      {/* MAIN CONTENT AREA */}
       <main className="main-content" id="mainContent">
-        {/* Top Mobile Navbar */}
+        {/* Mobile Top Header */}
         <header className="mobile-navbar">
           <div className="brand-cluster">
             <div className="brand-icon">
@@ -596,7 +670,6 @@ export default function App() {
               </svg>
             </div>
             <span className="brand-title">LearnIQ</span>
-            <span className="badge-subtle">PRO</span>
           </div>
           <button
             className="btn-icon"
@@ -611,16 +684,14 @@ export default function App() {
           </button>
         </header>
 
-        {/* WORKSPACE HEADER */}
+        {/* Top Header Bar with Mode Switcher */}
         <header className="workspace-header">
           <div className="header-left">
             <div className="breadcrumbs">
-              <span>LearnIQ System</span>
+              <span>LearnIQ Platform</span>
               <span className="breadcrumb-separator">/</span>
               <span className="breadcrumb-active">
-                {activeTab === 'workspace' && 'Recommendation Engine'}
-                {activeTab === 'catalog' && 'Full Resource Catalog'}
-                {activeTab === 'dashboard' && 'Learner Dashboard'}
+                {platformMode === 'learner' ? 'Learner Portal' : 'AI Recommendation Lab'}
               </span>
               <span className="badge-prod-connected">
                 <span className="pulse-dot-green"></span>
@@ -628,52 +699,620 @@ export default function App() {
               </span>
             </div>
             <h2 className="workspace-title">
-              {activeTab === 'workspace' && 'Hybrid Recommendation Workspace'}
-              {activeTab === 'catalog' && 'Live Course & Article Catalog'}
-              {activeTab === 'dashboard' && 'Personal Learning Dashboard'}
+              {platformMode === 'learner' ? 'Personalized Learning Curriculum' : 'Hybrid Model Lab & Parameters'}
             </h2>
-            <p className="workspace-description">
-              {activeTab === 'workspace' && 'Configure learner attributes, calibrate peer behavioral signals, and interactively explore hybrid rankings.'}
-              {activeTab === 'catalog' && `Explore all ${catalog.length} curated resources from YouTube and Dev.to currently stored in your live cloud database.`}
-              {activeTab === 'dashboard' && 'Track your saved reading list, completed learning modules, and personal milestones.'}
-            </p>
           </div>
 
           <div className="header-actions">
+            <div className="mode-switcher-container">
+              <button
+                type="button"
+                className={`btn-mode-tab ${platformMode === 'learner' ? 'active-learner' : ''}`}
+                onClick={() => { setPlatformMode('learner'); setActiveTab('home'); }}
+                title="Switch to clean consumer learning platform"
+              >
+                🎓 Learner View
+              </button>
+              <button
+                type="button"
+                className={`btn-mode-tab ${platformMode === 'lab' ? 'active-lab' : ''}`}
+                onClick={() => { setPlatformMode('lab'); setActiveTab('workspace'); }}
+                title="Switch to mathematical AI architecture lab"
+              >
+                🧪 AI Lab Mode
+              </button>
+            </div>
+
             <button
               type="button"
               className="btn btn-secondary"
               onClick={handleReset}
-              title="Restore all parameters to their initial default values"
+              title="Reset preferences to default"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-                <path d="M3 3v5h5"></path>
-              </svg>
-              <span>Reset</span>
-            </button>
-
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={loadingRecs}
-              onClick={() => {
-                fetchBackendRecommendations(profile)
-                const recSec = document.getElementById('recommendations')
-                if (recSec) recSec.scrollIntoView({ behavior: 'smooth' })
-              }}
-              title="Query the live model and update recommendations"
-            >
-              <svg className={loadingRecs ? "spinner-spin" : ""} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
-              </svg>
-              <span>{loadingRecs ? 'Running Model...' : 'Generate Recommendations'}</span>
+              Reset
             </button>
           </div>
         </header>
 
-        {/* TAB 1: WORKSPACE VIEW */}
-        {activeTab === 'workspace' && (
+        {/* =========================================================================
+            WEBSITE 1: CLEAN CONSUMER LEARNER PLATFORM (NO MATHEMATICS / JARGON)
+           ========================================================================= */}
+        {platformMode === 'learner' && (
+          <>
+            {activeTab === 'home' && (
+              <>
+                {/* Clean Consumer Hero Discovery Section */}
+                <section className="learner-hero">
+                  <span className="learner-hero-eyebrow">
+                    <span>✨</span> AI-POWERED PERSONALIZED CURRICULUM
+                  </span>
+                  <h1 className="learner-hero-title">
+                    Master In-Demand Skills with <span className="gradient-text">Curated Learning</span>
+                  </h1>
+                  <p className="learner-hero-desc">
+                    LearnIQ matches your background and goals with over 300+ verified courses, tutorials, and technical articles from premier creators and engineers.
+                  </p>
+
+                  {/* Search Bar */}
+                  <div className="learner-search-bar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ marginRight: '0.75rem', flexShrink: 0 }}>
+                      <circle cx="11" cy="11" r="8"></circle>
+                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="What do you want to master today? (e.g. Generative AI, Python, AWS)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="btn-launch"
+                      style={{ padding: '0.55rem 1.25rem' }}
+                      onClick={() => {
+                        const recGrid = document.getElementById('curatedSection')
+                        if (recGrid) recGrid.scrollIntoView({ behavior: 'smooth' })
+                      }}
+                    >
+                      Find Courses
+                    </button>
+                  </div>
+
+                  {/* Quick Topics */}
+                  <div className="learner-quick-topics">
+                    <span>Popular skills:</span>
+                    {['Generative AI', 'Python', 'Machine Learning', 'Cloud DevOps', 'Web Development'].map(t => (
+                      <span
+                        key={t}
+                        className="quick-topic-chip"
+                        onClick={() => {
+                          setSearchQuery(t)
+                          const recGrid = document.getElementById('curatedSection')
+                          if (recGrid) recGrid.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Browse by Domain */}
+                <section style={{ marginBottom: '2.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                    <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff' }}>Explore Subject Tracks</h3>
+                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Verified technical curricula</span>
+                  </div>
+
+                  <div className="domain-cards-grid">
+                    {DOMAINS.map(d => (
+                      <div
+                        key={d.id}
+                        className={`domain-card ${selectedDomain === d.id ? 'active' : ''}`}
+                        onClick={() => setSelectedDomain(d.id)}
+                      >
+                        <div className="domain-card-icon">{d.icon}</div>
+                        <div className="domain-card-title">{d.name}</div>
+                        <div className="domain-card-count">{d.count} Courses &amp; Articles</div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                {/* Onboarding Preferences Tuner (Non-Mathematical) */}
+                <section className="onboarding-card">
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div>
+                      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', marginBottom: '0.25rem' }}>
+                        Tailor Your Experience
+                      </h3>
+                      <p style={{ fontSize: '0.825rem', color: '#94a3b8', margin: 0 }}>
+                        Tell us your learning pace and preferred format so we can recommend the best content.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      disabled={loadingRecs}
+                      onClick={() => fetchBackendRecommendations(profile)}
+                    >
+                      {loadingRecs ? 'Updating Recommendations...' : 'Refresh My Feed'}
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
+                    {/* Experience Level */}
+                    <div>
+                      <label className="form-label">Skill Level</label>
+                      <div className="select-wrapper">
+                        <select
+                          className="form-select"
+                          value={profile.experience}
+                          onChange={(e) => setProfile(prev => ({ ...prev, experience: e.target.value }))}
+                        >
+                          <option value="Beginner">Beginner (Fundamentals)</option>
+                          <option value="Intermediate">Intermediate (Hands-on)</option>
+                          <option value="Advanced">Advanced (Production/Architecture)</option>
+                        </select>
+                        <span className="select-arrow" aria-hidden="true">▼</span>
+                      </div>
+                    </div>
+
+                    {/* Preferred Format */}
+                    <div>
+                      <label className="form-label">Preferred Format</label>
+                      <div className="select-wrapper">
+                        <select
+                          className="form-select"
+                          value={profile.format}
+                          onChange={(e) => setProfile(prev => ({ ...prev, format: e.target.value }))}
+                        >
+                          <option value="Video">Video Courses (YouTube)</option>
+                          <option value="Article">Technical Articles (Dev.to)</option>
+                          <option value="Course">Full Curriculum</option>
+                          <option value="Interactive">Hands-on Labs</option>
+                        </select>
+                        <span className="select-arrow" aria-hidden="true">▼</span>
+                      </div>
+                    </div>
+
+                    {/* Target Goal */}
+                    <div>
+                      <label className="form-label">Primary Goal</label>
+                      <div className="select-wrapper">
+                        <select
+                          className="form-select"
+                          value={profile.goal}
+                          onChange={(e) => setProfile(prev => ({ ...prev, goal: e.target.value }))}
+                        >
+                          <option value="Build AI projects">Build Practical Projects</option>
+                          <option value="Learn fundamentals">Learn Core Fundamentals</option>
+                          <option value="Career transition">Career Transition</option>
+                          <option value="Prepare for exams">Exam &amp; Certification Prep</option>
+                        </select>
+                        <span className="select-arrow" aria-hidden="true">▼</span>
+                      </div>
+                    </div>
+
+                    {/* Weekly Commitment */}
+                    <div>
+                      <label className="form-label">Weekly Commitment</label>
+                      <div className="select-wrapper">
+                        <select
+                          className="form-select"
+                          value={profile.weeklyTime}
+                          onChange={(e) => setProfile(prev => ({ ...prev, weeklyTime: e.target.value }))}
+                        >
+                          <option value="1-3">1–3 hours/week</option>
+                          <option value="4-6">4–6 hours/week</option>
+                          <option value="7-10">7–10 hours/week</option>
+                          <option value="10+">10+ hours/week</option>
+                        </select>
+                        <span className="select-arrow" aria-hidden="true">▼</span>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* "Curated For You" Courses Grid */}
+                <section id="curatedSection" style={{ marginBottom: '3rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                        <span className="badge-prod-connected">
+                          <span className="pulse-dot-green"></span>
+                          CURATED FOR {profile.name?.toUpperCase() || 'YOU'}
+                        </span>
+                        <span className="results-badge">{filteredCourses.length} matched</span>
+                      </div>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>Recommended Courses</h2>
+                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0 }}>
+                        Ranked by affinity with your {profile.experience} level and interest in {profile.format}s.
+                      </p>
+                    </div>
+
+                    {/* Format Filter Chips */}
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className={`filter-pill ${selectedFormat === 'all' ? 'active' : ''}`}
+                        onClick={() => setSelectedFormat('all')}
+                      >
+                        All Formats
+                      </button>
+                      <button
+                        type="button"
+                        className={`filter-pill ${selectedFormat === 'Video' ? 'active' : ''}`}
+                        onClick={() => setSelectedFormat('Video')}
+                      >
+                        📺 Videos
+                      </button>
+                      <button
+                        type="button"
+                        className={`filter-pill ${selectedFormat === 'Article' ? 'active' : ''}`}
+                        onClick={() => setSelectedFormat('Article')}
+                      >
+                        📰 Articles
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Clean Consumer Cards Grid */}
+                  <div className="recommendations-grid">
+                    {filteredCourses.map((item, idx) => {
+                      const isSaved = interactions.saved.includes(item.id)
+                      const isCompleted = interactions.completed.includes(item.id)
+
+                      return (
+                        <article key={item.id || idx} className="consumer-card">
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                              <span className="rec-type-pill">{item.type || 'Course'}</span>
+                              <span className="rec-provider">• {item.source || 'Instructor'}</span>
+                              {item.difficulty && (
+                                <span className="rec-provider" style={{ color: '#38bdf8' }}>• {item.difficulty}</span>
+                              )}
+                            </div>
+
+                            <span className="consumer-match-badge">
+                              {item.matchPercentage ? `${item.matchPercentage}% Match` : 'Top Match'}
+                            </span>
+                          </div>
+
+                          <h4 className="rec-title-link">{item.title}</h4>
+                          <p className="rec-description">{item.description || 'High-impact learning module designed to accelerate technical proficiency.'}</p>
+
+                          <div className="rec-tags">
+                            {item.topic && <span className="rec-tag tag-matched">{item.topic}</span>}
+                            {item.tags && item.tags.split(' ').slice(0, 3).map((t, tIdx) => (
+                              <span key={tIdx} className="rec-tag">{t}</span>
+                            ))}
+                          </div>
+
+                          <div className="rec-actions">
+                            <a
+                              href={item.url || '#'}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="btn-launch"
+                              onClick={() => handleAction(item, 'Clicked')}
+                            >
+                              <span>Launch Content</span>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <line x1="7" y1="17" x2="17" y2="7"></line>
+                                <polyline points="7 7 17 7 17 17"></polyline>
+                              </svg>
+                            </a>
+
+                            <button
+                              type="button"
+                              className={`btn-action-outline ${isSaved ? 'is-saved' : ''}`}
+                              onClick={() => handleAction(item, 'Liked')}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                              </svg>
+                              <span>{isSaved ? 'Saved' : 'Save'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className={`btn-action-outline ${isCompleted ? 'is-completed' : ''}`}
+                              onClick={() => handleAction(item, 'Completed')}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                              <span>{isCompleted ? 'Completed' : 'Mark Done'}</span>
+                            </button>
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+
+                  {filteredCourses.length === 0 && (
+                    <div className="no-results-panel">
+                      <div className="no-results-icon">🔍</div>
+                      <h4>No matching courses found</h4>
+                      <p>Try searching for a different keyword or resetting your domain filters.</p>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => { setSearchQuery(''); setSelectedDomain('all'); setSelectedFormat('all'); }}
+                      >
+                        Reset Search Filters
+                      </button>
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+
+            {/* TAB: EXPLORE CATALOG */}
+            {activeTab === 'catalog' && (
+              <section className="section-recommendations">
+                <div className="catalog-toolbar">
+                  <div className="catalog-search-row">
+                    <div className="search-box" style={{ flex: 1 }}>
+                      <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Search all 300+ courses by title, instructor, skill..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+
+                    <div className="select-wrapper" style={{ minWidth: 160 }}>
+                      <select
+                        className="form-select"
+                        value={selectedFormat}
+                        onChange={(e) => setSelectedFormat(e.target.value)}
+                      >
+                        <option value="all">All Formats</option>
+                        <option value="Video">Video Courses</option>
+                        <option value="Article">Technical Articles</option>
+                        <option value="Course">Full Courses</option>
+                      </select>
+                      <span className="select-arrow" aria-hidden="true">▼</span>
+                    </div>
+
+                    <div className="select-wrapper" style={{ minWidth: 160 }}>
+                      <select
+                        className="form-select"
+                        value={selectedDifficulty}
+                        onChange={(e) => setSelectedDifficulty(e.target.value)}
+                      >
+                        <option value="all">All Difficulties</option>
+                        <option value="Beginner">Beginner</option>
+                        <option value="Intermediate">Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                      </select>
+                      <span className="select-arrow" aria-hidden="true">▼</span>
+                    </div>
+                  </div>
+
+                  {/* Topic Filter Pills */}
+                  <div className="rec-filter-pills" style={{ marginBottom: 0 }}>
+                    <button
+                      type="button"
+                      className={`filter-pill ${selectedDomain === 'all' ? 'active' : ''}`}
+                      onClick={() => setSelectedDomain('all')}
+                    >
+                      All Subjects ({catalog.length})
+                    </button>
+                    {TOPIC_OPTIONS.map(topic => (
+                      <button
+                        key={topic}
+                        type="button"
+                        className={`filter-pill ${selectedDomain === topic ? 'active' : ''}`}
+                        onClick={() => setSelectedDomain(topic)}
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="recommendations-grid">
+                  {filteredCourses.map((item, idx) => {
+                    const isSaved = interactions.saved.includes(item.id)
+                    const isCompleted = interactions.completed.includes(item.id)
+
+                    return (
+                      <article key={item.id || idx} className="consumer-card">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span className="rec-type-pill">{item.type || 'Resource'}</span>
+                            <span className="rec-provider">• {item.source || 'Verified'}</span>
+                            {item.difficulty && (
+                              <span className="rec-provider" style={{ color: '#38bdf8' }}>• {item.difficulty}</span>
+                            )}
+                          </div>
+                          <span className="badge-rank-index">{item.rating ? `${item.rating} ★` : '4.8 ★'}</span>
+                        </div>
+
+                        <h4 className="rec-title-link">{item.title}</h4>
+                        <p className="rec-description">{item.description || 'Verified educational curriculum.'}</p>
+
+                        <div className="rec-tags">
+                          {item.topic && <span className="rec-tag tag-matched">{item.topic}</span>}
+                          {item.tags && item.tags.split(' ').slice(0, 3).map((t, i) => (
+                            <span key={i} className="rec-tag">{t}</span>
+                          ))}
+                        </div>
+
+                        <div className="rec-actions">
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="btn-launch"
+                            onClick={() => handleAction(item, 'Clicked')}
+                          >
+                            <span>Launch Content</span>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <line x1="7" y1="17" x2="17" y2="7"></line>
+                              <polyline points="7 7 17 7 17 17"></polyline>
+                            </svg>
+                          </a>
+
+                          <button
+                            type="button"
+                            className={`btn-action-outline ${isSaved ? 'is-saved' : ''}`}
+                            onClick={() => handleAction(item, 'Liked')}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                            <span>{isSaved ? 'Saved' : 'Save'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`btn-action-outline ${isCompleted ? 'is-completed' : ''}`}
+                            onClick={() => handleAction(item, 'Completed')}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            <span>{isCompleted ? 'Completed' : 'Mark Done'}</span>
+                          </button>
+                        </div>
+                      </article>
+                    )
+                  })}
+                </div>
+              </section>
+            )}
+
+            {/* TAB: MY LEARNING DASHBOARD */}
+            {activeTab === 'dashboard' && (
+              <section className="section-recommendations">
+                <div className="dashboard-stats-banner">
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
+                      ✓
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{completedCourses.length}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Completed Modules</div>
+                    </div>
+                  </div>
+
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-icon" style={{ background: 'rgba(244, 63, 94, 0.15)', color: '#fb7185' }}>
+                      ♥
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{savedCourses.length}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Wishlist Courses</div>
+                    </div>
+                  </div>
+
+                  <div className="dashboard-stat-card">
+                    <div className="dashboard-stat-icon" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
+                      ⚡
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{signals.sessions}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Learning Sessions</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Completed Courses Section */}
+                <div style={{ marginBottom: '3rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                    <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ color: '#34d399' }}>✓</span> Completed Modules ({completedCourses.length})
+                    </h3>
+                  </div>
+
+                  {completedCourses.length === 0 ? (
+                    <div className="no-results-panel" style={{ padding: '2rem' }}>
+                      <p style={{ margin: 0 }}>No completed courses yet. Click "Mark Done" on any recommended course to track your milestones here!</p>
+                    </div>
+                  ) : (
+                    <div className="recommendations-grid">
+                      {completedCourses.map(item => (
+                        <article key={item.id} className="consumer-card" style={{ borderTop: '3px solid #10b981' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                            <span className="rec-type-pill">{item.type || 'Course'}</span>
+                            <span className="mini-signal-badge" style={{ color: '#34d399' }}>COMPLETED</span>
+                          </div>
+                          <h4 className="rec-title-link">{item.title}</h4>
+                          <p className="rec-description">{item.description}</p>
+                          <div className="rec-actions">
+                            <a href={item.url} target="_blank" rel="noreferrer" className="btn-launch">
+                              Review Content
+                            </a>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Saved for Later Section */}
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
+                    <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ color: '#fb7185' }}>♥</span> Saved Wishlist ({savedCourses.length})
+                    </h3>
+                  </div>
+
+                  {savedCourses.length === 0 ? (
+                    <div className="no-results-panel" style={{ padding: '2rem' }}>
+                      <p style={{ margin: 0 }}>No saved courses in your wishlist. Click "Save" on courses you want to study next.</p>
+                    </div>
+                  ) : (
+                    <div className="recommendations-grid">
+                      {savedCourses.map(item => (
+                        <article key={item.id} className="consumer-card" style={{ borderTop: '3px solid #f43f5e' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                            <span className="rec-type-pill">{item.type || 'Course'}</span>
+                            <span className="mini-signal-badge" style={{ color: '#fb7185' }}>WISHLIST</span>
+                          </div>
+                          <h4 className="rec-title-link">{item.title}</h4>
+                          <p className="rec-description">{item.description}</p>
+                          <div className="rec-actions">
+                            <a href={item.url} target="_blank" rel="noreferrer" className="btn-launch">
+                              Start Learning
+                            </a>
+                            <button
+                              type="button"
+                              className="btn-action-outline"
+                              onClick={() => {
+                                setInteractions(prev => ({
+                                  ...prev,
+                                  saved: prev.saved.filter(id => id !== item.id)
+                                }))
+                                showToast("Removed from saved list", "info")
+                              }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* =========================================================================
+            WEBSITE 2: AI ARCHITECTURE LAB (PRESERVED MATHEMATICAL FORMULATION VIEW)
+           ========================================================================= */}
+        {platformMode === 'lab' && (
           <>
             {/* 3. OVERVIEW / HYBRID SCORE HERO */}
             <section id="overview" className="section-overview" aria-labelledby="overviewHeading">
@@ -779,7 +1418,6 @@ export default function App() {
                 </div>
 
                 <form className="cb-form" onSubmit={(e) => { e.preventDefault(); fetchBackendRecommendations(profile); }}>
-                  {/* Name Input */}
                   <div className="form-group full-width-group">
                     <label className="form-label">
                       <span>Full Name</span>
@@ -795,7 +1433,6 @@ export default function App() {
                     />
                   </div>
 
-                  {/* Experience Level */}
                   <div className="form-group">
                     <label className="form-label">
                       <span>Experience Level</span>
@@ -815,7 +1452,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Primary Goal */}
                   <div className="form-group">
                     <label className="form-label">
                       <span>Primary Goal</span>
@@ -836,7 +1472,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Preferred Format */}
                   <div className="form-group">
                     <label className="form-label">
                       <span>Preferred Format</span>
@@ -857,7 +1492,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Weekly Learning Time */}
                   <div className="form-group">
                     <label className="form-label">
                       <span>Weekly Learning Time</span>
@@ -878,7 +1512,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Topics of Interest */}
                   <div className="form-group full-width-group">
                     <div className="form-label">
                       <span>Topics of Interest</span>
@@ -924,7 +1557,6 @@ export default function App() {
                 </div>
 
                 <div className="signals-stepper-list">
-                  {/* Signal 1: Completed Resources */}
                   <div className="signal-card">
                     <div className="signal-info">
                       <div className="signal-label-row">
@@ -934,13 +1566,12 @@ export default function App() {
                       <p className="signal-desc">Completed modules in learner trajectory ({interactions.completed.length} live).</p>
                     </div>
                     <div className="stepper-controls">
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal()}>−</button>
+                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('completed', -1)}>−</button>
                       <span className="stepper-value">{signals.completed}</span>
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal()}>+</button>
+                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('completed', 1)}>+</button>
                     </div>
                   </div>
 
-                  {/* Signal 2: Saved Resources */}
                   <div className="signal-card">
                     <div className="signal-info">
                       <div className="signal-label-row">
@@ -950,13 +1581,12 @@ export default function App() {
                       <p className="signal-desc">Bookmarks or wishlist activity in library ({interactions.saved.length} live).</p>
                     </div>
                     <div className="stepper-controls">
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal()}>−</button>
+                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('saved', -1)}>−</button>
                       <span className="stepper-value">{signals.saved}</span>
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal()}>+</button>
+                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('saved', 1)}>+</button>
                     </div>
                   </div>
 
-                  {/* Signal 3: Explicit Ratings */}
                   <div className="signal-card">
                     <div className="signal-info">
                       <div className="signal-label-row">
@@ -966,13 +1596,12 @@ export default function App() {
                       <p className="signal-desc">Ratings submitted across completed courses.</p>
                     </div>
                     <div className="stepper-controls">
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal()}>−</button>
+                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('ratings', -1)}>−</button>
                       <span className="stepper-value">{signals.ratings}</span>
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal()}>+</button>
+                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('ratings', 1)}>+</button>
                     </div>
                   </div>
 
-                  {/* Signal 4: Recent Sessions */}
                   <div className="signal-card">
                     <div className="signal-info">
                       <div className="signal-label-row">
@@ -982,9 +1611,9 @@ export default function App() {
                       <p className="signal-desc">Active study sessions logged in the last 14-day window.</p>
                     </div>
                     <div className="stepper-controls">
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal()}>−</button>
+                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('sessions', -1)}>−</button>
                       <span className="stepper-value">{signals.sessions}</span>
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal()}>+</button>
+                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('sessions', 1)}>+</button>
                     </div>
                   </div>
                 </div>
@@ -1012,7 +1641,6 @@ export default function App() {
               </div>
 
               <div className="hybrid-controls-layout">
-                {/* Alpha Slider Block */}
                 <div className="slider-control-block">
                   <div className="slider-header-row">
                     <label htmlFor="alphaSlider" className="slider-main-label">
@@ -1026,7 +1654,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Custom Slider Track */}
                   <div className="slider-container">
                     <input
                       type="range"
@@ -1047,7 +1674,6 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Quick Blend Presets */}
                   <div className="slider-presets">
                     <span className="presets-label">Quick blend:</span>
                     <button type="button" className={`btn-chip-sm ${alpha === 1.0 ? 'active' : ''}`} onClick={() => setAlpha(1.0)}>Pure CB (1.0)</button>
@@ -1059,7 +1685,6 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Feature Toggles */}
                 <div className="toggles-grid">
                   <div className="toggle-card">
                     <div className="toggle-info">
@@ -1102,71 +1727,18 @@ export default function App() {
                 <div>
                   <div className="rec-eyebrow-row">
                     <span className="eyebrow">HYBRID RESULTS</span>
-                    <span className="results-badge">{filteredRecommendations.length} courses ranked</span>
+                    <span className="results-badge">{computedRecommendations.length} courses ranked</span>
                   </div>
                   <h3 id="recSectionHeading" className="rec-title">Recommended Learning Resources</h3>
                   <p className="rec-subtitle">
                     Dynamically ranked by the hybrid function H = α · CB + (1−α) · CF against live Supabase courses.
                   </p>
                 </div>
-
-                {/* Toolbar */}
-                <div className="rec-controls-toolbar">
-                  <div className="search-box">
-                    <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input
-                      type="text"
-                      placeholder="Filter by title, topic..."
-                      value={recSearch}
-                      onChange={(e) => setRecSearch(e.target.value)}
-                    />
-                  </div>
-
-                  <div className="sort-control-group">
-                    <label className="sort-label">Sort by:</label>
-                    <div className="select-wrapper">
-                      <select
-                        className="form-select form-select-sm"
-                        value={recSortBy}
-                        onChange={(e) => setRecSortBy(e.target.value)}
-                      >
-                        <option value="hybrid">Hybrid Score (H) ↓</option>
-                        <option value="cb">Content Score (CB) ↓</option>
-                        <option value="cf">Collaborative Score (CF) ↓</option>
-                      </select>
-                      <span className="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
-              {/* Topic Filter Pills */}
-              <div className="rec-filter-pills" role="toolbar">
-                <button
-                  type="button"
-                  className={`filter-pill ${recTopicFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setRecTopicFilter('all')}
-                >
-                  All Topics
-                </button>
-                {TOPIC_OPTIONS.map(topic => (
-                  <button
-                    key={topic}
-                    type="button"
-                    className={`filter-pill ${recTopicFilter === topic ? 'active' : ''}`}
-                    onClick={() => setRecTopicFilter(topic)}
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-
-              {/* Recommendations Grid */}
+              {/* Lab Recommendations Grid */}
               <div className="recommendations-grid">
-                {filteredRecommendations.map((item, index) => {
+                {computedRecommendations.map((item, index) => {
                   const isSaved = interactions.saved.includes(item.id)
                   const isCompleted = interactions.completed.includes(item.id)
 
@@ -1206,7 +1778,6 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Progress Bar showing CB and CF contribution */}
                         <div className="rec-score-bar-track">
                           <div className="rec-score-bar-cb" style={{ width: `${(item.weightedCb / item.hybridScore) * 100}%` }}></div>
                           <div className="rec-score-bar-cf" style={{ width: `${(item.weightedCf / item.hybridScore) * 100}%` }}></div>
@@ -1215,7 +1786,6 @@ export default function App() {
                           )}
                         </div>
 
-                        {/* Sub-scores */}
                         <div className="rec-subscores-grid">
                           <div className="subscore-item">
                             <span className="subscore-title">Content (CB)</span>
@@ -1234,7 +1804,6 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Explanation Accordion */}
                       {explainEnabled && (
                         <div className="rec-explanation-panel">
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.35rem' }}>
@@ -1251,7 +1820,6 @@ export default function App() {
                         </div>
                       )}
 
-                      {/* Action Buttons */}
                       <div className="rec-actions">
                         <a
                           href={item.url || '#'}
@@ -1261,10 +1829,6 @@ export default function App() {
                           onClick={() => handleAction(item, 'Clicked')}
                         >
                           <span>Launch Content</span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <line x1="7" y1="17" x2="17" y2="7"></line>
-                            <polyline points="7 7 17 7 17 17"></polyline>
-                          </svg>
                         </a>
 
                         <button
@@ -1272,9 +1836,6 @@ export default function App() {
                           className={`btn-action-outline ${isSaved ? 'is-saved' : ''}`}
                           onClick={() => handleAction(item, 'Liked')}
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                          </svg>
                           <span>{isSaved ? 'Saved' : 'Save'}</span>
                         </button>
 
@@ -1283,9 +1844,6 @@ export default function App() {
                           className={`btn-action-outline ${isCompleted ? 'is-completed' : ''}`}
                           onClick={() => handleAction(item, 'Completed')}
                         >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
                           <span>{isCompleted ? 'Completed' : 'Mark Done'}</span>
                         </button>
                       </div>
@@ -1293,300 +1851,22 @@ export default function App() {
                   )
                 })}
               </div>
-
-              {filteredRecommendations.length === 0 && (
-                <div className="no-results-panel">
-                  <div className="no-results-icon">🔍</div>
-                  <h4>No matching recommendations found</h4>
-                  <p>Try clearing your search query or selecting "All Topics" to see active recommendations.</p>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => { setRecSearch(''); setRecTopicFilter('all'); }}>
-                    Clear Filters
-                  </button>
-                </div>
-              )}
             </section>
           </>
-        )}
-
-        {/* TAB 2: FULL CATALOG VIEW */}
-        {activeTab === 'catalog' && (
-          <section className="section-recommendations">
-            <div className="catalog-toolbar">
-              <div className="catalog-search-row">
-                <div className="search-box" style={{ flex: 1 }}>
-                  <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="11" cy="11" r="8"></circle>
-                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search 300+ courses by title, topic, keywords..."
-                    value={catSearch}
-                    onChange={(e) => setCatSearch(e.target.value)}
-                  />
-                </div>
-
-                <div className="select-wrapper" style={{ minWidth: 160 }}>
-                  <select
-                    className="form-select"
-                    value={catTypeFilter}
-                    onChange={(e) => setCatTypeFilter(e.target.value)}
-                  >
-                    <option value="all">All Formats</option>
-                    <option value="Video">Videos</option>
-                    <option value="Article">Articles</option>
-                    <option value="Course">Courses</option>
-                    <option value="Tutorial">Tutorials</option>
-                  </select>
-                  <span className="select-arrow" aria-hidden="true">▼</span>
-                </div>
-
-                <div className="select-wrapper" style={{ minWidth: 160 }}>
-                  <select
-                    className="form-select"
-                    value={catDifficultyFilter}
-                    onChange={(e) => setCatDifficultyFilter(e.target.value)}
-                  >
-                    <option value="all">All Difficulties</option>
-                    <option value="Beginner">Beginner</option>
-                    <option value="Intermediate">Intermediate</option>
-                    <option value="Advanced">Advanced</option>
-                  </select>
-                  <span className="select-arrow" aria-hidden="true">▼</span>
-                </div>
-              </div>
-
-              {/* Topic Filters */}
-              <div className="rec-filter-pills" style={{ marginBottom: 0 }}>
-                <button
-                  type="button"
-                  className={`filter-pill ${catTopicFilter === 'all' ? 'active' : ''}`}
-                  onClick={() => setCatTopicFilter('all')}
-                >
-                  All Topics ({catalog.length})
-                </button>
-                {TOPIC_OPTIONS.map(topic => (
-                  <button
-                    key={topic}
-                    type="button"
-                    className={`filter-pill ${catTopicFilter === topic ? 'active' : ''}`}
-                    onClick={() => setCatTopicFilter(topic)}
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {loadingCatalog && (
-              <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                <div className="spinner-spin" style={{ display: 'inline-block', width: 28, height: 28, border: '3px solid #38bdf8', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
-                <p style={{ marginTop: '1rem' }}>Loading verified resources from Supabase...</p>
-              </div>
-            )}
-
-            {!loadingCatalog && (
-              <div className="recommendations-grid">
-                {filteredCatalog.map((item, idx) => {
-                  const isSaved = interactions.saved.includes(item.id)
-                  const isCompleted = interactions.completed.includes(item.id)
-
-                  return (
-                    <article key={item.id || idx} className="rec-card">
-                      <div className="rec-card-header">
-                        <div className="rec-type-provider">
-                          <span className="rec-type-pill">{item.type || 'Resource'}</span>
-                          <span className="rec-provider">• {item.source || 'Verified'}</span>
-                          {item.difficulty && (
-                            <span className="rec-provider" style={{ color: '#38bdf8' }}>• {item.difficulty}</span>
-                          )}
-                        </div>
-                        <span className="badge-rank-index">{item.rating ? `${item.rating} ★` : '4.8 ★'}</span>
-                      </div>
-
-                      <h4 className="rec-title-link">{item.title}</h4>
-                      <p className="rec-description">{item.description || 'Comprehensive learning content from verified instructors.'}</p>
-
-                      <div className="rec-tags">
-                        {item.topic && <span className="rec-tag tag-matched">{item.topic}</span>}
-                        {item.tags && item.tags.split(' ').slice(0, 3).map((t, i) => (
-                          <span key={i} className="rec-tag">{t}</span>
-                        ))}
-                      </div>
-
-                      <div className="rec-actions">
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-launch"
-                          onClick={() => handleAction(item, 'Clicked')}
-                        >
-                          <span>Launch Content</span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <line x1="7" y1="17" x2="17" y2="7"></line>
-                            <polyline points="7 7 17 7 17 17"></polyline>
-                          </svg>
-                        </a>
-
-                        <button
-                          type="button"
-                          className={`btn-action-outline ${isSaved ? 'is-saved' : ''}`}
-                          onClick={() => handleAction(item, 'Liked')}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                          </svg>
-                          <span>{isSaved ? 'Saved' : 'Save'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={`btn-action-outline ${isCompleted ? 'is-completed' : ''}`}
-                          onClick={() => handleAction(item, 'Completed')}
-                        >
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                          <span>{isCompleted ? 'Completed' : 'Mark Done'}</span>
-                        </button>
-                      </div>
-                    </article>
-                  )
-                })}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* TAB 3: DASHBOARD VIEW */}
-        {activeTab === 'dashboard' && (
-          <section className="section-recommendations">
-            <div className="dashboard-stats-banner">
-              <div className="dashboard-stat-card">
-                <div className="dashboard-stat-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
-                  ✓
-                </div>
-                <div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{completedCourses.length}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Completed Modules</div>
-                </div>
-              </div>
-
-              <div className="dashboard-stat-card">
-                <div className="dashboard-stat-icon" style={{ background: 'rgba(244, 63, 94, 0.15)', color: '#fb7185' }}>
-                  ♥
-                </div>
-                <div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{savedCourses.length}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Saved for Later</div>
-                </div>
-              </div>
-
-              <div className="dashboard-stat-card">
-                <div className="dashboard-stat-icon" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
-                  ⚡
-                </div>
-                <div>
-                  <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{signals.sessions}</div>
-                  <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Learning Sessions</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Completed Courses Section */}
-            <div style={{ marginBottom: '3rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ color: '#34d399' }}>✓</span> Completed Courses ({completedCourses.length})
-                </h3>
-              </div>
-
-              {completedCourses.length === 0 ? (
-                <div className="no-results-panel" style={{ padding: '2rem' }}>
-                  <p style={{ margin: 0 }}>No completed courses yet. Click "Mark Done" on any recommended course to track it here!</p>
-                </div>
-              ) : (
-                <div className="recommendations-grid">
-                  {completedCourses.map(item => (
-                    <article key={item.id} className="rec-card" style={{ borderTop: '3px solid #10b981' }}>
-                      <div className="rec-card-header">
-                        <span className="rec-type-pill">{item.type || 'Course'}</span>
-                        <span className="mini-signal-badge" style={{ color: '#34d399' }}>COMPLETED</span>
-                      </div>
-                      <h4 className="rec-title-link">{item.title}</h4>
-                      <p className="rec-description">{item.description}</p>
-                      <div className="rec-actions">
-                        <a href={item.url} target="_blank" rel="noreferrer" className="btn-launch">
-                          Review Content
-                        </a>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Saved for Later Section */}
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ color: '#fb7185' }}>♥</span> Saved for Later ({savedCourses.length})
-                </h3>
-              </div>
-
-              {savedCourses.length === 0 ? (
-                <div className="no-results-panel" style={{ padding: '2rem' }}>
-                  <p style={{ margin: 0 }}>No saved courses in your wishlist. Click "Save" on courses you want to study next.</p>
-                </div>
-              ) : (
-                <div className="recommendations-grid">
-                  {savedCourses.map(item => (
-                    <article key={item.id} className="rec-card" style={{ borderTop: '3px solid #f43f5e' }}>
-                      <div className="rec-card-header">
-                        <span className="rec-type-pill">{item.type || 'Course'}</span>
-                        <span className="mini-signal-badge" style={{ color: '#fb7185' }}>WISHLIST</span>
-                      </div>
-                      <h4 className="rec-title-link">{item.title}</h4>
-                      <p className="rec-description">{item.description}</p>
-                      <div className="rec-actions">
-                        <a href={item.url} target="_blank" rel="noreferrer" className="btn-launch">
-                          Start Learning
-                        </a>
-                        <button
-                          type="button"
-                          className="btn-action-outline"
-                          onClick={() => {
-                            setInteractions(prev => ({
-                              ...prev,
-                              saved: prev.saved.filter(id => id !== item.id)
-                            }))
-                            showToast("Removed from saved list", "info")
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
         )}
 
         {/* FOOTER */}
         <footer className="app-footer">
           <div className="footer-content">
             <div className="footer-left">
-              <span className="brand-subtext"><strong>LearnIQ</strong> — Production AI Learning Resource Recommendation Platform</span>
+              <span className="brand-subtext"><strong>LearnIQ</strong> — Intelligent Learning Recommendation Platform</span>
               <span className="footer-dot">•</span>
               <span>FastAPI &amp; Render Cloud</span>
               <span className="footer-dot">•</span>
               <span>Supabase PostgreSQL DB</span>
             </div>
             <div className="footer-right">
-              <span>Formulation: H = α · CB + (1 − α) · CF</span>
+              <span>{platformMode === 'learner' ? 'Empowering 300+ Tech Learners' : 'Formulation: H = α · CB + (1 − α) · CF'}</span>
             </div>
           </div>
         </footer>
