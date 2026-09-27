@@ -25,48 +25,145 @@ const DOMAINS = [
   { id: 'cloud', name: 'Cloud & DevOps', icon: '☁️', count: '45+' }
 ]
 
-// Function to dynamically generate a 4-stage Career Roadmap for ANY typed skill
-function generateDynamicRoadmap(targetTopic, completedCount = 0) {
-  const clean = targetTopic?.trim() || 'Software & AI Engineering'
+// Fallback catalog pool for instant zero-delay roadmap hydration
+const FALLBACK_CATALOG = [
+  { id: 'fb-1', title: 'Foundational Programming & Computational Logic', difficulty: 'Beginner', type: 'Course', topic: 'Python', rating: 4.8, url: 'https://developer.mozilla.org' },
+  { id: 'fb-2', title: 'Mathematics, Linear Algebra & Probability Fundamentals', difficulty: 'Beginner', type: 'Video', topic: 'Machine Learning', rating: 4.9, url: 'https://khanacademy.org' },
+  { id: 'fb-3', title: 'Applied Algorithms & Core Engineering Frameworks', difficulty: 'Intermediate', type: 'Course', topic: 'Software Engineering', rating: 4.8, url: 'https://github.com' },
+  { id: 'fb-4', title: 'Data Pipelines, API Integration & Service Architecture', difficulty: 'Intermediate', type: 'Article', topic: 'Data Science', rating: 4.7, url: 'https://fastapi.tiangolo.com' },
+  { id: 'fb-5', title: 'Advanced Scalable Architectures & Deep Systems Optimization', difficulty: 'Advanced', type: 'Course', topic: 'Systems Engineering', rating: 4.9, url: 'https://pytorch.org' },
+  { id: 'fb-6', title: 'High-Performance Production Distributed Systems & Cloud Infrastructure', difficulty: 'Advanced', type: 'Video', topic: 'Cloud Computing', rating: 4.8, url: 'https://kubernetes.io' },
+  { id: 'fb-7', title: 'End-to-End Enterprise Production Capstone Project', difficulty: 'Advanced', type: 'Course', topic: 'Machine Learning', rating: 4.9, url: 'https://github.com' },
+  { id: 'fb-8', title: 'Automated CI/CD Delivery Pipeline & Production Deployment', difficulty: 'Advanced', type: 'Course', topic: 'DevOps', rating: 4.8, url: 'https://docs.docker.com' }
+]
+
+// Function to dynamically build a 4-stage Career Roadmap with REAL courses and live completion tracking
+function buildDynamicRoadmap(targetTopic, catalog = [], completedIds = []) {
+  const clean = targetTopic?.trim() || 'Machine Learning'
+  const goalLower = clean.toLowerCase()
+  const activePool = catalog && catalog.length > 0 ? catalog : FALLBACK_CATALOG
+
+  // Search matching courses by topic, title, or description
+  let matched = activePool.filter(c => {
+    const t = (c.topic || '').toLowerCase()
+    const title = (c.title || '').toLowerCase()
+    const desc = (c.description || '').toLowerCase()
+    return t.includes(goalLower) || title.includes(goalLower) || desc.includes(goalLower)
+  })
+
+  // Backfill if fewer than 8 matching
+  if (matched.length < 8) {
+    const matchedIds = new Set(matched.map(c => c.id))
+    const backfill = activePool.filter(c => !matchedIds.has(c.id))
+    matched = [...matched, ...backfill]
+  }
+
+  // Difficulty pools
+  const beginnerPool = matched.filter(c => (c.difficulty || '').toLowerCase() === 'beginner')
+  const interPool = matched.filter(c => (c.difficulty || '').toLowerCase() === 'intermediate')
+  const advPool = matched.filter(c => (c.difficulty || '').toLowerCase() === 'advanced')
+
+  const usedIds = new Set()
+  const pickCourses = (primary, fallbacks, count = 2) => {
+    const picked = []
+    for (const c of primary) {
+      if (picked.length >= count) break
+      if (!usedIds.has(c.id)) {
+        usedIds.add(c.id)
+        picked.push(c)
+      }
+    }
+    for (const fb of fallbacks) {
+      if (picked.length >= count) break
+      for (const c of fb) {
+        if (picked.length >= count) break
+        if (!usedIds.has(c.id)) {
+          usedIds.add(c.id)
+          picked.push(c)
+        }
+      }
+    }
+    return picked
+  }
+
+  const stage1Courses = pickCourses(beginnerPool, [matched, activePool], 2)
+  const stage2Courses = pickCourses(interPool, [matched, activePool], 2)
+  const stage3Courses = pickCourses(advPool, [matched, activePool], 2)
+  const stage4Courses = pickCourses(
+    matched.filter(c => c.type === 'Course' || (c.title || '').toLowerCase().includes('project') || (c.title || '').toLowerCase().includes('capstone')),
+    [advPool, interPool, matched, activePool],
+    2
+  )
+
+  const rawStages = [
+    {
+      id: 1,
+      title: `Stage 1: ${clean} Core Foundations`,
+      desc: `Master essential principles, foundational syntax, and core algorithms required for ${clean}.`,
+      skills: [`${clean} Basics`, 'Environment Setup', 'Core Syntax'],
+      courses: stage1Courses,
+      topic: clean
+    },
+    {
+      id: 2,
+      title: `Stage 2: Applied ${clean} & Industry Tooling`,
+      desc: `Hands-on frameworks, standard libraries, API integration, and real-world coding implementations.`,
+      skills: ['Frameworks', 'Hands-on Practice', 'Standard Libraries'],
+      courses: stage2Courses,
+      topic: clean
+    },
+    {
+      id: 3,
+      title: `Stage 3: Advanced Architectures & Production Scaling`,
+      desc: `Deep dive into system optimization, scalable architectures, and production-grade techniques.`,
+      skills: ['Performance Optimization', 'System Design', 'Scaling Patterns'],
+      courses: stage3Courses,
+      topic: clean
+    },
+    {
+      id: 4,
+      title: `Stage 4: Portfolio Capstone & Cloud Deployment`,
+      desc: `Synthesize skills in an end-to-end industry capstone with CI/CD deployment and performance testing.`,
+      skills: ['Capstone Project', 'Cloud Deployment', 'Production Standards'],
+      courses: stage4Courses,
+      topic: clean
+    }
+  ]
+
+  let prevCompleted = true
+  const steps = rawStages.map((st) => {
+    const totalCount = st.courses.length
+    const completedCount = st.courses.filter(c => completedIds.includes(c.id)).length
+    const isCompleted = totalCount > 0 && completedCount === totalCount
+    const isInProgress = !isCompleted && (completedCount > 0 || prevCompleted)
+    const status = isCompleted ? 'completed' : isInProgress ? 'in-progress' : 'upcoming'
+    prevCompleted = isCompleted
+
+    const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
+
+    return {
+      ...st,
+      totalCount,
+      completedCount,
+      percent,
+      status
+    }
+  })
+
+  const totalRoadmapCourses = steps.reduce((acc, st) => acc + st.totalCount, 0)
+  const completedRoadmapCourses = steps.reduce((acc, st) => acc + st.completedCount, 0)
+  const overallPercent = totalRoadmapCourses > 0 ? Math.round((completedRoadmapCourses / totalRoadmapCourses) * 100) : 0
+
   return {
     title: `${clean} Career Roadmap`,
-    description: `A 4-stage learning path dynamically generated for ${clean}.`,
-    steps: [
-      {
-        id: 1,
-        title: `Stage 1: ${clean} Core Foundations`,
-        desc: `Master essential principles, syntax, foundational algorithms, and setup for ${clean}.`,
-        skills: [`${clean} Basics`, 'Environment Setup', 'Core Syntax'],
-        topic: clean,
-        status: completedCount > 0 ? 'completed' : 'in-progress'
-      },
-      {
-        id: 2,
-        title: `Stage 2: Applied ${clean} & Standard Tooling`,
-        desc: `Hands-on implementations, popular libraries, data integration, and practical exercises.`,
-        skills: ['Frameworks', 'Hands-on Practice', 'Best Practices'],
-        topic: clean,
-        status: completedCount > 1 ? 'completed' : completedCount > 0 ? 'in-progress' : 'upcoming'
-      },
-      {
-        id: 3,
-        title: `Stage 3: Advanced Architectures & Production Techniques`,
-        desc: `Performance tuning, system design, optimization, and real-world architectures.`,
-        skills: ['Architecture', 'Performance Optimization', 'System Design'],
-        topic: clean,
-        status: completedCount > 2 ? 'completed' : 'upcoming'
-      },
-      {
-        id: 4,
-        title: `Stage 4: Portfolio Capstone & Cloud Deployment`,
-        desc: `Deliver end-to-end capstone projects, automated testing, and production deployment.`,
-        skills: ['Capstone Project', 'Cloud CI/CD', 'Production Standards'],
-        topic: clean,
-        status: completedCount > 3 ? 'completed' : 'upcoming'
-      }
-    ]
+    description: `A customized 4-stage technical roadmap dynamically synthesized for ${clean} with live course tracking.`,
+    steps,
+    totalRoadmapCourses,
+    completedRoadmapCourses,
+    overallPercent
   }
 }
+
 
 // Preset Profiles for Lab Mode
 const PRESETS = {
@@ -323,18 +420,26 @@ export default function App() {
         saved: [...new Set([...prev.saved, resource.id])]
       }))
       showToast(`Saved "${resource.title.slice(0, 30)}..." to your Wishlist`, 'success')
-    } else if (actionType === 'Completed') {
+    } else if (actionType === 'Completed' || actionType === 'ToggleComplete') {
       const alreadyDone = interactions.completed.includes(resource.id)
-      if (alreadyDone) return
-      setInteractions(prev => ({
-        ...prev,
-        completed: [...new Set([...prev.completed, resource.id])]
-      }))
-      // If this was the active course, mark it complete
-      if (activeCourse && activeCourse.id === resource.id) {
-        setActiveCourse(prev => ({ ...prev, progress: 100, currentLesson: 'Completed ✓' }))
+      if (alreadyDone && actionType === 'ToggleComplete') {
+        setInteractions(prev => ({
+          ...prev,
+          completed: prev.completed.filter(id => id !== resource.id)
+        }))
+        showToast(`Unmarked "${resource.title.slice(0, 30)}..."`, 'info')
+        return
       }
-      showToast(`Marked "${resource.title.slice(0, 30)}..." as Completed!`, 'success')
+      if (!alreadyDone) {
+        setInteractions(prev => ({
+          ...prev,
+          completed: [...new Set([...prev.completed, resource.id])]
+        }))
+        if (activeCourse && activeCourse.id === resource.id) {
+          setActiveCourse(prev => ({ ...prev, progress: 100, currentLesson: 'Completed ✓' }))
+        }
+        showToast(`Marked "${resource.title.slice(0, 30)}..." as Completed!`, 'success')
+      }
     } else if (actionType === 'Clicked') {
       // ONLY set as active in-progress course when user explicitly clicks Launch!
       setActiveCourse({
@@ -352,12 +457,42 @@ export default function App() {
         body: JSON.stringify({
           student_id: currentUser?.username || 'guest_student',
           resource_id: resource.id,
-          interaction_type: actionType
+          interaction_type: actionType === 'ToggleComplete' ? 'Completed' : actionType
         })
       })
     } catch (err) {
       console.error("Could not sync interaction to backend:", err)
     }
+  }
+
+  // One-click demo student instant access
+  const handleInstantDemoLogin = () => {
+    const demoUser = {
+      username: 'alex_demo',
+      name: 'Alex Morgan',
+      role: 'Verified Scholar',
+      email: 'alex.morgan@learniq.edu'
+    }
+    const accountsDb = JSON.parse(localStorage.getItem('learniq_accounts_db') || '{}')
+    if (!accountsDb['alex_demo']) {
+      accountsDb['alex_demo'] = {
+        ...demoUser,
+        goal: activeSkillGoal || 'Machine Learning',
+        saved: [],
+        completed: [],
+        activeCourse: null
+      }
+      localStorage.setItem('learniq_accounts_db', JSON.stringify(accountsDb))
+    }
+    const account = accountsDb['alex_demo']
+    setCurrentUser(demoUser)
+    setProfile(prev => ({ ...prev, name: 'Alex Morgan', goal: account.goal || activeSkillGoal || 'Machine Learning' }))
+    setInteractions({ saved: account.saved || [], completed: account.completed || [] })
+    if (account.activeCourse) setActiveCourse(account.activeCourse)
+    localStorage.setItem('learniq_auth_session', JSON.stringify(demoUser))
+    setAuthModalOpen(false)
+    showToast("Signed in as Demo Student (Alex Morgan). Welcome to LearnIQ!", "success")
+    fetchRecommendationsForGoal(account.goal || activeSkillGoal || 'Machine Learning', profile.experience, profile.format)
   }
 
   // Handle Authentication Submission (Clean account isolation!)
@@ -376,6 +511,7 @@ export default function App() {
       const newAccount = {
         username: cleanUser,
         name: authFullName.trim() || cleanUser,
+        role: 'Verified Student',
         password: authPassword,
         goal: activeSkillGoal,
         saved: [],
@@ -384,30 +520,33 @@ export default function App() {
       }
       accountsDb[cleanUser] = newAccount
       localStorage.setItem('learniq_accounts_db', JSON.stringify(accountsDb))
+      localStorage.setItem('learniq_auth_session', JSON.stringify(newAccount))
 
-      setCurrentUser({ username: newAccount.username, name: newAccount.name, role: 'Verified Student' })
+      setCurrentUser(newAccount)
       setProfile(prev => ({ ...prev, name: newAccount.name, goal: activeSkillGoal }))
       setInteractions({ saved: [], completed: [] })
       setActiveCourse(null)
       setAuthModalOpen(false)
-      showToast(`Welcome, ${newAccount.name}! Your clean account is registered.`, 'success')
+      showToast(`Welcome, ${newAccount.name}! Your account is registered and saved.`, 'success')
       fetchRecommendationsForGoal(activeSkillGoal, profile.experience, profile.format)
     } else {
       // Sign In
       const existing = accountsDb[cleanUser]
       if (existing && existing.password === authPassword) {
-        setCurrentUser({ username: existing.username, name: existing.name, role: 'Verified Student' })
+        setCurrentUser(existing)
         setProfile(prev => ({ ...prev, name: existing.name, goal: existing.goal || activeSkillGoal }))
         setInteractions({ saved: existing.saved || [], completed: existing.completed || [] })
         setActiveCourse(existing.activeCourse || null)
         if (existing.goal) setActiveSkillGoal(existing.goal)
+        localStorage.setItem('learniq_auth_session', JSON.stringify(existing))
         setAuthModalOpen(false)
         showToast(`Welcome back, ${existing.name}!`, 'success')
         fetchRecommendationsForGoal(existing.goal || activeSkillGoal, profile.experience, profile.format)
       } else {
-        // Allow instant sign-in for demonstration if password matches
+        // Allow instant sign-in for demonstration
         const fallbackUser = { username: cleanUser, name: authFullName.trim() || cleanUser, role: 'Verified Student' }
         setCurrentUser(fallbackUser)
+        localStorage.setItem('learniq_auth_session', JSON.stringify(fallbackUser))
         setAuthModalOpen(false)
         showToast(`Signed in as ${fallbackUser.name}!`, 'success')
       }
@@ -492,10 +631,10 @@ export default function App() {
     showToast("Reset to clean state. Type any skill to begin!", "info")
   }
 
-  // Dynamic Roadmap generated specifically for the active skill goal!
+  // Dynamic Roadmap generated specifically for the active skill goal with REAL courses and live counts!
   const currentDynamicRoadmap = useMemo(() => {
-    return generateDynamicRoadmap(activeSkillGoal, interactions.completed.length)
-  }, [activeSkillGoal, interactions.completed.length])
+    return buildDynamicRoadmap(activeSkillGoal, catalog, interactions.completed)
+  }, [activeSkillGoal, catalog, interactions.completed])
 
   // Signal Totals
   const totalSignals = (signals.completed || 0) + (signals.saved || 0) + (signals.ratings || 0) + (signals.sessions || 0)
@@ -903,7 +1042,7 @@ export default function App() {
               </button>
             </div>
 
-            {/* Coursera/Swayam Style Student Account Button */}
+            {/* Student Account Profile Button */}
             {currentUser ? (
               <div style={{ position: 'relative' }}>
                 <div
@@ -925,21 +1064,35 @@ export default function App() {
                     position: 'absolute',
                     top: '115%',
                     right: 0,
-                    width: 220,
+                    width: 240,
                     background: 'var(--bg-sidebar)',
                     border: '1px solid var(--border-medium)',
                     borderRadius: 'var(--radius-md)',
-                    padding: '0.75rem',
+                    padding: '0.85rem',
                     boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
                     zIndex: 100
                   }}>
                     <div style={{ paddingBottom: '0.6rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '0.6rem' }}>
-                      <div style={{ fontSize: '0.825rem', fontWeight: 700, color: '#fff' }}>{currentUser.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#38bdf8' }}>{currentUser.role}</div>
+                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{currentUser.name}</div>
+                      <div style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 600 }}>{currentUser.role || 'Verified Student'}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.2rem' }}>Track: <strong>{activeSkillGoal}</strong></div>
                     </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '0.75rem' }}>
+                      <span>Saved: <strong style={{ color: '#fff' }}>{interactions.saved.length}</strong></span>
+                      <span>Completed: <strong style={{ color: '#34d399' }}>{interactions.completed.length}</strong></span>
+                    </div>
+                    {currentUser.username !== 'alex_demo' && (
+                      <button
+                        type="button"
+                        style={{ width: '100%', textAlign: 'left', padding: '0.45rem', fontSize: '0.75rem', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', cursor: 'pointer', borderRadius: '4px', marginBottom: '0.5rem' }}
+                        onClick={handleInstantDemoLogin}
+                      >
+                        ⚡ Switch to Demo Student
+                      </button>
+                    )}
                     <button
                       type="button"
-                      style={{ width: '100%', textAlign: 'left', padding: '0.45rem', fontSize: '0.8rem', color: '#fb7185', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+                      style={{ width: '100%', textAlign: 'left', padding: '0.45rem', fontSize: '0.78rem', color: '#fb7185', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
                       onClick={handleSignOut}
                     >
                       Sign Out
@@ -948,10 +1101,19 @@ export default function App() {
                 )}
               </div>
             ) : (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
+                <button
+                  type="button"
+                  className="btn-demo-quick"
+                  onClick={handleInstantDemoLogin}
+                  title="Instantly explore platform as Alex Morgan (Verified Scholar)"
+                >
+                  ⚡ Demo Student
+                </button>
                 <button
                   type="button"
                   className="btn btn-secondary"
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                   onClick={() => { setAuthTab('login'); setAuthModalOpen(true); }}
                 >
                   Sign In
@@ -959,6 +1121,7 @@ export default function App() {
                 <button
                   type="button"
                   className="btn btn-primary"
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                   onClick={() => { setAuthTab('register'); setAuthModalOpen(true); }}
                 >
                   Register
@@ -1090,7 +1253,7 @@ export default function App() {
                   </div>
                 </section>
 
-                {/* GUEST BANNER: INVITE TO REGISTER IF NOT LOGGED IN */}
+                {/* GUEST BANNER: INVITE TO REGISTER OR TRY 1-CLICK DEMO */}
                 {!currentUser && (
                   <div style={{
                     marginBottom: '2.5rem',
@@ -1108,16 +1271,26 @@ export default function App() {
                       <span style={{ fontSize: '1.5rem' }}>🎓</span>
                       <div>
                         <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>Save your customized roadmap and course progress</div>
-                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Create a free student account with a username and password to keep your progress across sessions.</div>
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Create an account or explore instantly with a verified scholar demo account.</div>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      onClick={() => { setAuthTab('register'); setAuthModalOpen(true); }}
-                    >
-                      Create Free Account
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn-demo-quick"
+                        onClick={handleInstantDemoLogin}
+                        title="Instantly sign in as Alex Morgan"
+                      >
+                        ⚡ 1-Click Demo Access
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => { setAuthTab('register'); setAuthModalOpen(true); }}
+                      >
+                        Create Free Account
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -1132,28 +1305,42 @@ export default function App() {
                         {currentDynamicRoadmap.title}
                       </h3>
                       <p style={{ fontSize: '0.825rem', color: '#94a3b8', margin: 0, marginTop: '0.2rem' }}>
-                        {currentDynamicRoadmap.description} Click any stage to view matching courses.
+                        {currentDynamicRoadmap.description}
                       </p>
                     </div>
 
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => setActiveTab('roadmap')}
-                    >
-                      Inspect Detailed Roadmap →
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#38bdf8' }}>
+                          {currentDynamicRoadmap.completedRoadmapCourses} / {currentDynamicRoadmap.totalRoadmapCourses} Courses Finished
+                        </div>
+                        <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                          Overall Progress: {currentDynamicRoadmap.overallPercent}%
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => setActiveTab('roadmap')}
+                      >
+                        Inspect Full Roadmap →
+                      </button>
+                    </div>
                   </div>
 
-                  <div className="roadmap-steps-grid">
+                  {/* Overall Roadmap Progress Bar */}
+                  <div className="roadmap-progress-bar-container">
+                    <div
+                      className="roadmap-progress-bar-fill"
+                      style={{ width: `${currentDynamicRoadmap.overallPercent}%` }}
+                    />
+                  </div>
+
+                  <div className="roadmap-steps-grid" style={{ marginTop: '1.5rem' }}>
                     {currentDynamicRoadmap.steps.map(st => (
                       <div
                         key={st.id}
                         className={`roadmap-step-card ${st.status === 'completed' ? 'is-completed' : ''} ${st.status === 'in-progress' ? 'is-active' : ''}`}
-                        onClick={() => {
-                          const recGrid = document.getElementById('curatedSection')
-                          if (recGrid) recGrid.scrollIntoView({ behavior: 'smooth' })
-                        }}
                       >
                         <div className="step-header-row">
                           <div className="step-number-badge">
@@ -1165,7 +1352,67 @@ export default function App() {
                         </div>
                         <h4 className="step-title">{st.title}</h4>
                         <p className="step-desc">{st.desc}</p>
-                        <div className="step-skills">
+
+                        {/* Live Course Counter & Mini Progress Bar */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#38bdf8', marginBottom: '0.25rem' }}>
+                          <span>Stage Milestones</span>
+                          <span>{st.completedCount} / {st.totalCount} Done ({st.percent}%)</span>
+                        </div>
+                        <div className="roadmap-stage-progress-bar">
+                          <div
+                            className={`roadmap-stage-progress-fill ${st.status === 'completed' ? 'is-done' : ''}`}
+                            style={{ width: `${st.percent}%` }}
+                          />
+                        </div>
+
+                        {/* Real Curated Courses in this Stage */}
+                        <div className="roadmap-stage-courses">
+                          {st.courses.map(course => {
+                            const isCompleted = interactions.completed.includes(course.id)
+                            const isActive = activeCourse && activeCourse.id === course.id
+                            return (
+                              <div key={course.id} className={`roadmap-course-item ${isCompleted ? 'is-done' : ''} ${isActive ? 'is-active' : ''}`}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                    <span className="rec-type-pill" style={{ fontSize: '0.62rem', padding: '1px 5px' }}>{course.type || 'Course'}</span>
+                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{course.difficulty}</span>
+                                  </div>
+                                  {course.rating && <span style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 600 }}>★ {course.rating}</span>}
+                                </div>
+                                <div className="roadmap-course-title" title={course.title}>
+                                  {course.title}
+                                </div>
+                                <div className="roadmap-course-actions">
+                                  <button
+                                    type="button"
+                                    className={`btn-roadmap-action ${isCompleted ? 'btn-done' : ''}`}
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleAction(course, 'ToggleComplete')
+                                    }}
+                                    title={isCompleted ? 'Completed! Click to unmark' : 'Mark as complete to advance roadmap'}
+                                  >
+                                    {isCompleted ? '✓ Completed' : 'Mark Complete'}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn-roadmap-launch"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      handleAction(course, 'Clicked')
+                                      if (course.url) window.open(course.url, '_blank', 'noopener,noreferrer')
+                                    }}
+                                    title="Launch course and start learning"
+                                  >
+                                    Launch ↗
+                                  </button>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+
+                        <div className="step-skills" style={{ marginTop: '0.85rem' }}>
                           {st.skills.map((sk, idx) => (
                             <span key={idx} className="step-skill-pill">{sk}</span>
                           ))}
@@ -1351,19 +1598,62 @@ export default function App() {
                   </div>
 
                   {/* Skill Goal Input on Roadmap Page */}
-                  <form onSubmit={handleSkillSearch} style={{ display: 'flex', gap: '0.5rem' }}>
+                  <form onSubmit={handleSkillSearch} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <input
                       type="text"
                       className="auth-input"
-                      style={{ minWidth: 220 }}
-                      placeholder="Type a new skill (e.g. React)..."
+                      style={{ minWidth: 240 }}
+                      placeholder="Type a new skill (e.g. React, Cloud, Python)..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     <button type="submit" className="btn btn-primary">
-                      Update Roadmap
+                      Generate Roadmap
                     </button>
                   </form>
+                </div>
+
+                {/* Quick Topics Chips */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Switch track:</span>
+                  {['Machine Learning', 'Generative AI', 'Python', 'Web Development', 'Cloud Computing', 'Deep Learning', 'Data Science'].map(t => (
+                    <button
+                      key={t}
+                      type="button"
+                      className={`filter-pill ${activeSkillGoal.toLowerCase() === t.toLowerCase() ? 'active' : ''}`}
+                      style={{ fontSize: '0.72rem', padding: '3px 10px' }}
+                      onClick={() => {
+                        setSearchQuery(t)
+                        setActiveSkillGoal(t)
+                        fetchRecommendationsForGoal(t, profile.experience, profile.format)
+                      }}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+
+                {/* MASTER ROADMAP PROGRESS BAR & SUMMARY */}
+                <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                    <div>
+                      <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>
+                        Overall Learning Path Completion
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                        Track your progress across all 4 career milestones for <strong>{activeSkillGoal}</strong>.
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#38bdf8' }}>
+                      {currentDynamicRoadmap.completedRoadmapCourses} / {currentDynamicRoadmap.totalRoadmapCourses} Courses Finished ({currentDynamicRoadmap.overallPercent}%)
+                    </div>
+                  </div>
+                  <div className="roadmap-progress-bar-container" style={{ height: '10px' }}>
+                    <div
+                      className="roadmap-progress-bar-fill"
+                      style={{ width: `${currentDynamicRoadmap.overallPercent}%` }}
+                    />
+                  </div>
                 </div>
 
                 {/* Milestone Steps Grid */}
@@ -1372,10 +1662,6 @@ export default function App() {
                     <div
                       key={st.id}
                       className={`roadmap-step-card ${st.status === 'completed' ? 'is-completed' : ''} ${st.status === 'in-progress' ? 'is-active' : ''}`}
-                      onClick={() => {
-                        setActiveTab('home')
-                        showToast(`Filtered recommendations for: ${st.title}`, 'info')
-                      }}
                     >
                       <div className="step-header-row">
                         <div className="step-number-badge">
@@ -1389,15 +1675,69 @@ export default function App() {
                       <h4 className="step-title">{st.title}</h4>
                       <p className="step-desc">{st.desc}</p>
 
-                      <div className="step-skills">
+                      {/* Live Course Counter & Mini Progress Bar */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#38bdf8', marginBottom: '0.25rem' }}>
+                        <span>Stage Milestones</span>
+                        <span>{st.completedCount} / {st.totalCount} Done ({st.percent}%)</span>
+                      </div>
+                      <div className="roadmap-stage-progress-bar">
+                        <div
+                          className={`roadmap-stage-progress-fill ${st.status === 'completed' ? 'is-done' : ''}`}
+                          style={{ width: `${st.percent}%` }}
+                        />
+                      </div>
+
+                      {/* Real Curated Courses in this Stage */}
+                      <div className="roadmap-stage-courses">
+                        {st.courses.map(course => {
+                          const isCompleted = interactions.completed.includes(course.id)
+                          const isActive = activeCourse && activeCourse.id === course.id
+                          return (
+                            <div key={course.id} className={`roadmap-course-item ${isCompleted ? 'is-done' : ''} ${isActive ? 'is-active' : ''}`}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                  <span className="rec-type-pill" style={{ fontSize: '0.62rem', padding: '1px 5px' }}>{course.type || 'Course'}</span>
+                                  <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{course.difficulty}</span>
+                                </div>
+                                {course.rating && <span style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 600 }}>★ {course.rating}</span>}
+                              </div>
+                              <div className="roadmap-course-title" title={course.title}>
+                                {course.title}
+                              </div>
+                              <div className="roadmap-course-actions">
+                                <button
+                                  type="button"
+                                  className={`btn-roadmap-action ${isCompleted ? 'btn-done' : ''}`}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleAction(course, 'ToggleComplete')
+                                  }}
+                                  title={isCompleted ? 'Completed! Click to unmark' : 'Mark as complete to advance roadmap'}
+                                >
+                                  {isCompleted ? '✓ Completed' : 'Mark Complete'}
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-roadmap-launch"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleAction(course, 'Clicked')
+                                    if (course.url) window.open(course.url, '_blank', 'noopener,noreferrer')
+                                  }}
+                                  title="Launch course and start learning"
+                                >
+                                  Launch ↗
+                                </button>
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+
+                      <div className="step-skills" style={{ marginTop: '0.85rem' }}>
                         {st.skills.map((sk, skIdx) => (
                           <span key={skIdx} className="step-skill-pill">{sk}</span>
                         ))}
-                      </div>
-
-                      <div style={{ marginTop: '0.85rem', paddingTop: '0.65rem', borderTop: '1px dashed var(--border-subtle)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 600 }}>Explore Courses →</span>
-                        <span style={{ fontSize: '0.68rem', color: '#94a3b8' }}>Target: {st.topic}</span>
                       </div>
                     </div>
                   ))}
@@ -2141,7 +2481,7 @@ export default function App() {
         <footer className="app-footer">
           <div className="footer-content">
             <div className="footer-left">
-              <span className="brand-subtext"><strong>LearnIQ</strong> — Coursera &amp; Swayam Style Intelligent Learning System</span>
+              <span className="brand-subtext"><strong>LearnIQ</strong> — Enterprise Adaptive AI Learning Platform</span>
               <span className="footer-dot">•</span>
               <span>FastAPI &amp; Render Cloud</span>
               <span className="footer-dot">•</span>
@@ -2175,6 +2515,24 @@ export default function App() {
                 ×
               </button>
             </div>
+
+            {/* Instant Demo Scholar Access Button */}
+            <div className="demo-login-callout" onClick={handleInstantDemoLogin}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div className="demo-bolt-circle">⚡</div>
+                <div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
+                    1-Click Demo Student Access
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                    Explore immediately as Alex Morgan (Verified Scholar) — no signup required
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: '0.8rem', color: '#38bdf8', fontWeight: 700 }}>Enter →</span>
+            </div>
+
+            <div className="auth-divider"><span>OR CONTINUE WITH YOUR ACCOUNT</span></div>
 
             <div className="auth-tabs">
               <button
