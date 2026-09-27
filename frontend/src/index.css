@@ -2676,4 +2676,385 @@ input:checked + .switch-slider:before {
   margin-bottom: 2.5rem;
 }
 
+/* --------------------------------------------------------------------------
+   AUTHENTICATION: REGISTRATION, LOGIN MODAL & USER AVATAR
+   -------------------------------------------------------------------------- */
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 13, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: fadeIn 0.2s ease;
+}
+
+.auth-modal-card {
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 30px rgba(56, 189, 248, 0.15);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 440px;
+  padding: 2.25rem 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-tabs {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  padding: 4px;
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.6rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  border: none;
+}
+
+.auth-tab.active {
+  background: var(--hybrid-gradient);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.35);
+}
+
+.auth-form-group {
+  margin-bottom: 1.15rem;
+}
+
+.auth-form-group label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.4rem;
+}
+
+.auth-input {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.9rem;
+  color: #fff;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.auth-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.auth-submit-btn {
+  width: 100%;
+  background: var(--hybrid-gradient);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.92rem;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 14px var(--hybrid-glow);
+  transition: all var(--transition-fast);
+  margin-top: 0.5rem;
+}
+
+.auth-submit-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px var(--hybrid-glow);
+}
+
+.auth-user-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-medium);
+  padding: 0.3rem 0.75rem 0.3rem 0.35rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.auth-user-badge:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.user-avatar-circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0ea5e9, #a855f7);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   CURRENT LEARNING CONTENT BANNER ("CONTINUE LEARNING")
+   -------------------------------------------------------------------------- */
+.continue-learning-card {
+  background: linear-gradient(135deg, rgba(16, 23, 38, 0.95) 0%, rgba(13, 27, 42, 0.95) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem 2rem;
+  margin-bottom: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 25px rgba(56, 189, 248, 0.1);
+}
+
+.continue-learning-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  height: 100%;
+  background: linear-gradient(180deg, #38bdf8, #818cf8);
+}
+
+.continue-learning-info {
+  flex: 1;
+}
+
+.continue-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+  margin-bottom: 0.4rem;
+}
+
+.continue-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 0.6rem;
+}
+
+.continue-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-bottom: 1rem;
+}
+
+.continue-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 420px;
+}
+
+.continue-progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.continue-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #34d399);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.continue-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   STEP-BY-STEP MILESTONE LEARNING ROADMAP
+   -------------------------------------------------------------------------- */
+.roadmap-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  padding: 2.25rem 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.roadmap-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.roadmap-track-name {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.roadmap-steps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  position: relative;
+}
+
+.roadmap-step-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: all var(--transition-normal);
+  cursor: pointer;
+}
+
+.roadmap-step-card:hover {
+  transform: translateY(-3px);
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.05);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.roadmap-step-card.is-active {
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.08);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+}
+
+.roadmap-step-card.is-completed {
+  border-color: rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.step-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+}
+
+.step-number-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.roadmap-step-card.is-completed .step-number-badge {
+  background: #10b981;
+  color: #fff;
+}
+
+.roadmap-step-card.is-active .step-number-badge {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.step-status-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+
+.tag-completed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+}
+
+.tag-in-progress {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+}
+
+.tag-upcoming {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.step-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.4rem;
+}
+
+.step-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin-bottom: 1rem;
+  flex: 1;
+}
+
+.step-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: auto;
+}
+
+.step-skill-pill {
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: #cbd5e1;
+}
+
+
 
