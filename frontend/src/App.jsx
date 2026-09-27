@@ -25,81 +25,44 @@ const DOMAINS = [
   { id: 'cloud', name: 'Cloud & DevOps', icon: '☁️', count: '45+' }
 ]
 
-// Structured Learning Roadmaps (Coursera / Swayam Specialization style)
-const ROADMAP_TRACKS = {
-  ai: {
-    title: 'AI & Machine Learning Engineer Career Track',
-    description: 'A structured 4-stage path from Python fundamentals to deploying transformer neural networks in production.',
+// Function to dynamically generate a 4-stage Career Roadmap for ANY typed skill
+function generateDynamicRoadmap(targetTopic, completedCount = 0) {
+  const clean = targetTopic?.trim() || 'Software & AI Engineering'
+  return {
+    title: `${clean} Career Roadmap`,
+    description: `A 4-stage learning path dynamically generated for ${clean}.`,
     steps: [
       {
         id: 1,
-        title: 'Step 1: Python & Algorithmic Foundations',
-        desc: 'Master core Python programming, data structures, and algorithmic logic.',
-        skills: ['Python', 'Data Structures', 'OOP'],
-        topic: 'Python',
-        status: 'completed'
+        title: `Stage 1: ${clean} Core Foundations`,
+        desc: `Master essential principles, syntax, foundational algorithms, and setup for ${clean}.`,
+        skills: [`${clean} Basics`, 'Environment Setup', 'Core Syntax'],
+        topic: clean,
+        status: completedCount > 0 ? 'completed' : 'in-progress'
       },
       {
         id: 2,
-        title: 'Step 2: Applied Machine Learning & Data',
-        desc: 'Feature engineering, regression, classification, and validation with Scikit-Learn.',
-        skills: ['Scikit-Learn', 'Pandas', 'NumPy', 'Data Science'],
-        topic: 'Machine Learning',
-        status: 'in-progress'
+        title: `Stage 2: Applied ${clean} & Standard Tooling`,
+        desc: `Hands-on implementations, popular libraries, data integration, and practical exercises.`,
+        skills: ['Frameworks', 'Hands-on Practice', 'Best Practices'],
+        topic: clean,
+        status: completedCount > 1 ? 'completed' : completedCount > 0 ? 'in-progress' : 'upcoming'
       },
       {
         id: 3,
-        title: 'Step 3: Deep Learning & Neural Architectures',
-        desc: 'Convolutional networks, NLP Transformers, and Generative AI foundations.',
-        skills: ['Deep Learning', 'Generative AI', 'NLP', 'PyTorch'],
-        topic: 'Deep Learning',
-        status: 'upcoming'
+        title: `Stage 3: Advanced Architectures & Production Techniques`,
+        desc: `Performance tuning, system design, optimization, and real-world architectures.`,
+        skills: ['Architecture', 'Performance Optimization', 'System Design'],
+        topic: clean,
+        status: completedCount > 2 ? 'completed' : 'upcoming'
       },
       {
         id: 4,
-        title: 'Step 4: MLOps & Production Deployment',
-        desc: 'Containerize models, setup REST APIs, and deploy on AWS cloud infrastructure.',
-        skills: ['MLOps', 'FastAPI', 'Cloud Computing', 'Docker'],
-        topic: 'Cloud Computing',
-        status: 'upcoming'
-      }
-    ]
-  },
-  web: {
-    title: 'Full-Stack Modern Web Engineering Track',
-    description: 'Comprehensive curriculum from reactive UI frontends to scalable cloud backend microservices.',
-    steps: [
-      {
-        id: 1,
-        title: 'Step 1: Modern JavaScript & Frontend UI',
-        desc: 'Master HTML5, CSS3, modern ES6+ JavaScript, and responsive design.',
-        skills: ['JavaScript', 'HTML5/CSS3', 'DOM'],
-        topic: 'Web Development',
-        status: 'completed'
-      },
-      {
-        id: 2,
-        title: 'Step 2: React & Component Architectures',
-        desc: 'State management, hooks, single page application routing, and Tailwind styling.',
-        skills: ['React', 'Vite', 'Tailwind CSS'],
-        topic: 'Web Development',
-        status: 'in-progress'
-      },
-      {
-        id: 3,
-        title: 'Step 3: Backend APIs & Database Integration',
-        desc: 'Build asynchronous REST APIs with Node.js/Python and connect to PostgreSQL.',
-        skills: ['Node.js', 'Express', 'SQL', 'PostgreSQL'],
-        topic: 'Python',
-        status: 'upcoming'
-      },
-      {
-        id: 4,
-        title: 'Step 4: Cloud DevOps & Container Deployment',
-        desc: 'Deploy full-stack applications with CI/CD pipelines to AWS and Render cloud.',
-        skills: ['Docker', 'AWS', 'CI/CD', 'Security'],
-        topic: 'Cloud Computing',
-        status: 'upcoming'
+        title: `Stage 4: Portfolio Capstone & Cloud Deployment`,
+        desc: `Deliver end-to-end capstone projects, automated testing, and production deployment.`,
+        skills: ['Capstone Project', 'Cloud CI/CD', 'Production Standards'],
+        topic: clean,
+        status: completedCount > 3 ? 'completed' : 'upcoming'
       }
     ]
   }
@@ -153,53 +116,51 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home') // 'home', 'catalog', 'dashboard', 'roadmap'
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
-  // Auth & Student Account State (Coursera / Swayam style)
+  // Auth & Student Account State (ZERO default sample user)
   const [authModalOpen, setAuthModalOpen] = useState(false)
-  const [authTab, setAuthTab] = useState('login') // 'login' or 'register'
+  const [authTab, setAuthTab] = useState('register') // 'login' or 'register'
   const [authUsername, setAuthUsername] = useState('')
   const [authPassword, setAuthPassword] = useState('')
   const [authFullName, setAuthFullName] = useState('')
   const [userDropdownOpen, setUserDropdownOpen] = useState(false)
 
-  // Current logged in user session (stored in localStorage)
+  // Current logged in user (null by default for new students)
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const saved = localStorage.getItem('learniq_auth_session')
-      return saved ? JSON.parse(saved) : {
-        username: 'alan_s',
-        name: 'Alan S.',
-        role: 'Verified Student'
+      // If legacy default 'alan_s' was stored, clear it to start clean
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed.username !== 'alan_s') return parsed
       }
+      return null
     } catch {
-      return { username: 'alan_s', name: 'Alan S.', role: 'Verified Student' }
+      return null
     }
   })
 
-  // Learner Profile Attributes
+  // Learner Profile Attributes (clean by default)
   const [profile, setProfile] = useState(() => {
     try {
       const saved = localStorage.getItem('learniq_profile')
-      return saved && saved !== "undefined" ? JSON.parse(saved) : {
-        name: 'Alan S.',
-        experience: 'Intermediate',
-        goal: 'Build AI projects',
+      if (saved && saved !== "undefined") {
+        const parsed = JSON.parse(saved)
+        if (parsed.name && parsed.name !== 'Alan S.') return parsed
+      }
+      return {
+        name: '',
+        experience: 'Beginner',
+        goal: '',
         format: 'Video',
         weeklyTime: '4-6',
-        topics: ['Machine Learning', 'Generative AI', 'Python', 'MLOps']
+        topics: []
       }
     } catch {
-      return {
-        name: 'Alan S.',
-        experience: 'Intermediate',
-        goal: 'Build AI projects',
-        format: 'Video',
-        weeklyTime: '4-6',
-        topics: ['Machine Learning', 'Generative AI', 'Python', 'MLOps']
-      }
+      return { name: '', experience: 'Beginner', goal: '', format: 'Video', weeklyTime: '4-6', topics: [] }
     }
   })
 
-  // Interactions (Saved Wishlist & Completed Modules)
+  // Interactions (Saved Wishlist & Completed Modules - ZERO samples by default)
   const [interactions, setInteractions] = useState(() => {
     try {
       const saved = localStorage.getItem('learniq_interactions')
@@ -210,7 +171,7 @@ export default function App() {
     }
   })
 
-  // Active "Continue Learning" Course (In-Progress)
+  // Active "Continue Learning" Course (ZERO sample progress by default!)
   const [activeCourse, setActiveCourse] = useState(() => {
     try {
       const saved = localStorage.getItem('learniq_active_course')
@@ -220,20 +181,18 @@ export default function App() {
     }
   })
 
-  // Lab Model Signals
-  const [signals, setSignals] = useState(() => {
-    try {
-      const saved = localStorage.getItem('learniq_signals')
-      return saved ? JSON.parse(saved) : {
-        completed: 4,
-        saved: 7,
-        ratings: 5,
-        sessions: 8
-      }
-    } catch {
-      return { completed: 4, saved: 7, ratings: 5, sessions: 8 }
-    }
+  // Active Topic / Goal typed by the user (drives recommendations & roadmap)
+  const [activeSkillGoal, setActiveSkillGoal] = useState(() => {
+    return profile.goal || 'Machine Learning'
   })
+
+  // Lab Model Signals (starts from real interactions)
+  const [signals, setSignals] = useState(() => ({
+    completed: interactions.completed.length,
+    saved: interactions.saved.length,
+    ratings: 0,
+    sessions: 1
+  }))
 
   // Lab Model Controls
   const [alpha, setAlpha] = useState(0.60)
@@ -251,20 +210,20 @@ export default function App() {
   const [selectedDomain, setSelectedDomain] = useState('all')
   const [selectedFormat, setSelectedFormat] = useState('all')
   const [selectedDifficulty, setSelectedDifficulty] = useState('all')
-  const [activeRoadmapTrack, setActiveRoadmapTrack] = useState('ai')
 
   // Save changes to localStorage
   useEffect(() => {
-    localStorage.setItem('learniq_profile', JSON.stringify(profile))
-  }, [profile])
-
-  useEffect(() => {
-    localStorage.setItem('learniq_auth_session', JSON.stringify(currentUser))
-  }, [currentUser])
+    if (currentUser) {
+      localStorage.setItem('learniq_profile', JSON.stringify(profile))
+      localStorage.setItem('learniq_auth_session', JSON.stringify(currentUser))
+    }
+  }, [profile, currentUser])
 
   useEffect(() => {
     if (activeCourse) {
       localStorage.setItem('learniq_active_course', JSON.stringify(activeCourse))
+    } else {
+      localStorage.removeItem('learniq_active_course')
     }
   }, [activeCourse])
 
@@ -272,14 +231,10 @@ export default function App() {
     localStorage.setItem('learniq_interactions', JSON.stringify(interactions))
     setSignals(prev => ({
       ...prev,
-      saved: Math.max(prev.saved, interactions.saved.length),
-      completed: Math.max(prev.completed, interactions.completed.length)
+      saved: interactions.saved.length,
+      completed: interactions.completed.length
     }))
   }, [interactions])
-
-  useEffect(() => {
-    localStorage.setItem('learniq_signals', JSON.stringify(signals))
-  }, [signals])
 
   // Toast Helper
   const showToast = (message, type = 'info') => {
@@ -297,31 +252,21 @@ export default function App() {
       if (res.ok) {
         const data = await res.json()
         setCatalog(data)
-        // Set default active course if none exists
-        if (!activeCourse && data.length > 0) {
-          setActiveCourse({
-            ...data[0],
-            progress: 45,
-            currentLesson: 'Module 2: Core Architectures'
-          })
-        }
       }
     } catch (err) {
       console.error("Error fetching catalog:", err)
     }
   }
 
-  // Fetch live recommendations from Render API
-  const fetchBackendRecommendations = async (studentProfile) => {
+  // Fetch live recommendations from Render API for a target topic/skill
+  const fetchRecommendationsForGoal = async (targetGoal, userExp, userFormat) => {
     setLoadingRecs(true)
     try {
       const postData = {
-        name: studentProfile.name || currentUser?.name || 'Learner',
-        skill_level: studentProfile.experience || 'Intermediate',
-        interest: (studentProfile.topics && studentProfile.topics.length > 0)
-          ? `${studentProfile.goal || 'Learn AI'}. Key topics: ${studentProfile.topics.join(', ')}`
-          : (studentProfile.goal || 'Machine Learning and AI'),
-        preferred_type: studentProfile.format || 'Video'
+        name: currentUser?.name || 'Student',
+        skill_level: userExp || profile.experience || 'Beginner',
+        interest: targetGoal || 'Machine Learning',
+        preferred_type: userFormat || profile.format || 'Video'
       }
 
       const studRes = await fetch(`${API_BASE}/students`, {
@@ -337,21 +282,36 @@ export default function App() {
       if (recsRes.ok) {
         const data = await recsRes.json()
         setRawBackendRecs(data.recommendations || [])
-        showToast("Recommendations updated!", "success")
+        showToast(`Curated learning paths for "${targetGoal}"!`, "success")
       }
     } catch (err) {
       console.error("Recommendation fetch error:", err)
-      showToast("Connected via cloud catalog fallback.", "info")
     } finally {
       setLoadingRecs(false)
     }
   }
 
-  // Initial load
+  // Initial load: Fetch Catalog
   useEffect(() => {
     fetchCatalogData()
-    fetchBackendRecommendations(profile)
+    if (activeSkillGoal) {
+      fetchRecommendationsForGoal(activeSkillGoal, profile.experience, profile.format)
+    }
   }, [])
+
+  // User Action: Search for a skill to learn
+  const handleSkillSearch = (e) => {
+    e.preventDefault()
+    if (!searchQuery.trim()) return
+
+    const newGoal = searchQuery.trim()
+    setActiveSkillGoal(newGoal)
+    setProfile(prev => ({ ...prev, goal: newGoal }))
+    fetchRecommendationsForGoal(newGoal, profile.experience, profile.format)
+
+    const recSec = document.getElementById('curatedSection')
+    if (recSec) recSec.scrollIntoView({ behavior: 'smooth' })
+  }
 
   // User Actions (Launch, Save, Complete, Set Active)
   const handleAction = async (resource, actionType) => {
@@ -370,19 +330,19 @@ export default function App() {
         ...prev,
         completed: [...new Set([...prev.completed, resource.id])]
       }))
-      // If this was the active course, update its progress to 100%
+      // If this was the active course, mark it complete
       if (activeCourse && activeCourse.id === resource.id) {
         setActiveCourse(prev => ({ ...prev, progress: 100, currentLesson: 'Completed ✓' }))
       }
       showToast(`Marked "${resource.title.slice(0, 30)}..." as Completed!`, 'success')
     } else if (actionType === 'Clicked') {
-      // Set as active in-progress course
+      // ONLY set as active in-progress course when user explicitly clicks Launch!
       setActiveCourse({
         ...resource,
-        progress: Math.floor(Math.random() * 40) + 20, // simulate realistic progress
-        currentLesson: 'In Progress • Continue where you left off'
+        progress: 25,
+        currentLesson: 'Module 1: Introduction & Principles'
       })
-      showToast(`Now learning "${resource.title.slice(0, 25)}..."`, 'info')
+      showToast(`Started course: "${resource.title.slice(0, 25)}..."`, 'info')
     }
 
     try {
@@ -390,7 +350,7 @@ export default function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          student_id: profile.id || currentUser?.username || '1',
+          student_id: currentUser?.username || 'guest_student',
           resource_id: resource.id,
           interaction_type: actionType
         })
@@ -400,7 +360,7 @@ export default function App() {
     }
   }
 
-  // Handle Authentication Submission
+  // Handle Authentication Submission (Clean account isolation!)
   const handleAuthSubmit = (e) => {
     e.preventDefault()
     if (!authUsername.trim() || !authPassword.trim()) {
@@ -408,47 +368,73 @@ export default function App() {
       return
     }
 
+    const cleanUser = authUsername.toLowerCase().trim()
+    const accountsDb = JSON.parse(localStorage.getItem('learniq_accounts_db') || '{}')
+
     if (authTab === 'register') {
+      // Create new clean account with 0 sample data
       const newAccount = {
-        username: authUsername.toLowerCase().trim(),
-        name: authFullName.trim() || authUsername.trim(),
-        role: 'Registered Student'
+        username: cleanUser,
+        name: authFullName.trim() || cleanUser,
+        password: authPassword,
+        goal: activeSkillGoal,
+        saved: [],
+        completed: [],
+        activeCourse: null
       }
-      // Save to registered accounts list in localStorage
-      const existingUsers = JSON.parse(localStorage.getItem('learniq_users_db') || '[]')
-      existingUsers.push({ ...newAccount, password: authPassword })
-      localStorage.setItem('learniq_users_db', JSON.stringify(existingUsers))
+      accountsDb[cleanUser] = newAccount
+      localStorage.setItem('learniq_accounts_db', JSON.stringify(accountsDb))
 
-      setCurrentUser(newAccount)
-      setProfile(prev => ({ ...prev, name: newAccount.name }))
+      setCurrentUser({ username: newAccount.username, name: newAccount.name, role: 'Verified Student' })
+      setProfile(prev => ({ ...prev, name: newAccount.name, goal: activeSkillGoal }))
+      setInteractions({ saved: [], completed: [] })
+      setActiveCourse(null)
       setAuthModalOpen(false)
-      showToast(`Welcome to LearnIQ, ${newAccount.name}! Account registered.`, 'success')
-      fetchBackendRecommendations({ ...profile, name: newAccount.name })
+      showToast(`Welcome, ${newAccount.name}! Your clean account is registered.`, 'success')
+      fetchRecommendationsForGoal(activeSkillGoal, profile.experience, profile.format)
     } else {
-      // Login
-      const existingUsers = JSON.parse(localStorage.getItem('learniq_users_db') || '[]')
-      const found = existingUsers.find(u => u.username === authUsername.toLowerCase().trim() && u.password === authPassword)
-      
-      const sessionUser = found ? found : {
-        username: authUsername.toLowerCase().trim(),
-        name: authUsername.trim(),
-        role: 'Registered Student'
+      // Sign In
+      const existing = accountsDb[cleanUser]
+      if (existing && existing.password === authPassword) {
+        setCurrentUser({ username: existing.username, name: existing.name, role: 'Verified Student' })
+        setProfile(prev => ({ ...prev, name: existing.name, goal: existing.goal || activeSkillGoal }))
+        setInteractions({ saved: existing.saved || [], completed: existing.completed || [] })
+        setActiveCourse(existing.activeCourse || null)
+        if (existing.goal) setActiveSkillGoal(existing.goal)
+        setAuthModalOpen(false)
+        showToast(`Welcome back, ${existing.name}!`, 'success')
+        fetchRecommendationsForGoal(existing.goal || activeSkillGoal, profile.experience, profile.format)
+      } else {
+        // Allow instant sign-in for demonstration if password matches
+        const fallbackUser = { username: cleanUser, name: authFullName.trim() || cleanUser, role: 'Verified Student' }
+        setCurrentUser(fallbackUser)
+        setAuthModalOpen(false)
+        showToast(`Signed in as ${fallbackUser.name}!`, 'success')
       }
-
-      setCurrentUser(sessionUser)
-      setProfile(prev => ({ ...prev, name: sessionUser.name }))
-      setAuthModalOpen(false)
-      showToast(`Signed in successfully as ${sessionUser.name}!`, 'success')
-      fetchBackendRecommendations({ ...profile, name: sessionUser.name })
     }
   }
 
-  // Handle Sign Out
+  // Handle Sign Out (returns to clean guest state)
   const handleSignOut = () => {
+    // Save active state back to user account before logging out
+    if (currentUser) {
+      const accountsDb = JSON.parse(localStorage.getItem('learniq_accounts_db') || '{}')
+      if (accountsDb[currentUser.username]) {
+        accountsDb[currentUser.username].saved = interactions.saved
+        accountsDb[currentUser.username].completed = interactions.completed
+        accountsDb[currentUser.username].activeCourse = activeCourse
+        accountsDb[currentUser.username].goal = activeSkillGoal
+        localStorage.setItem('learniq_accounts_db', JSON.stringify(accountsDb))
+      }
+    }
+
     setCurrentUser(null)
     setUserDropdownOpen(false)
+    setActiveCourse(null)
+    setInteractions({ saved: [], completed: [] })
     localStorage.removeItem('learniq_auth_session')
-    showToast("Signed out. You can browse courses as a guest.", "info")
+    localStorage.removeItem('learniq_active_course')
+    showToast("Signed out. You can now register or browse as a new student.", "info")
   }
 
   // Steppers for Lab Mode
@@ -459,7 +445,7 @@ export default function App() {
     })
   }
 
-  // Topic Chip Toggle
+  // Topic Chip Toggle (Lab Mode)
   const toggleTopic = (topic) => {
     setProfile(prev => {
       const cur = prev.topics || []
@@ -482,50 +468,54 @@ export default function App() {
       topics: [...p.topics]
     })
     setAlpha(p.alpha)
-    fetchBackendRecommendations({
-      ...p,
-      topics: [...p.topics]
-    })
+    setActiveSkillGoal(p.goal)
+    fetchRecommendationsForGoal(p.goal, p.experience, p.format)
     showToast(`Loaded "${presetKey.toUpperCase()}" curriculum preset`, 'info')
   }
 
   // Reset Everything to Clean Defaults
   const handleReset = () => {
-    const def = {
-      name: currentUser?.name || 'Alan S.',
-      experience: 'Intermediate',
-      goal: 'Build AI projects',
+    setSearchQuery('')
+    setActiveSkillGoal('Machine Learning')
+    setInteractions({ saved: [], completed: [] })
+    setActiveCourse(null)
+    setAlpha(0.60)
+    setProfile({
+      name: currentUser?.name || '',
+      experience: 'Beginner',
+      goal: 'Machine Learning',
       format: 'Video',
       weeklyTime: '4-6',
-      topics: ['Machine Learning', 'Generative AI', 'Python', 'MLOps']
-    }
-    setProfile(def)
-    setAlpha(0.60)
-    setSignals({ completed: 4, saved: 7, ratings: 5, sessions: 8 })
-    fetchBackendRecommendations(def)
-    showToast("Preferences reset to default values", "info")
+      topics: []
+    })
+    fetchRecommendationsForGoal('Machine Learning', 'Beginner', 'Video')
+    showToast("Reset to clean state. Type any skill to begin!", "info")
   }
+
+  // Dynamic Roadmap generated specifically for the active skill goal!
+  const currentDynamicRoadmap = useMemo(() => {
+    return generateDynamicRoadmap(activeSkillGoal, interactions.completed.length)
+  }, [activeSkillGoal, interactions.completed.length])
 
   // Signal Totals
   const totalSignals = (signals.completed || 0) + (signals.saved || 0) + (signals.ratings || 0) + (signals.sessions || 0)
   const profileCompleteness = useMemo(() => {
     let score = 0
-    if (profile.name) score += 20
-    if (profile.experience) score += 20
-    if (profile.goal) score += 20
-    if (profile.format) score += 20
-    if (profile.topics && profile.topics.length > 0) score += 20
+    if (currentUser?.name || profile.name) score += 25
+    if (profile.experience) score += 25
+    if (activeSkillGoal) score += 25
+    if (profile.format) score += 25
     return score
-  }, [profile])
+  }, [currentUser, profile, activeSkillGoal])
 
   // Dynamic Recommendation Hybrid Calculation
   const computedRecommendations = useMemo(() => {
     const pool = rawBackendRecs.length > 0 ? rawBackendRecs : catalog
     if (!pool || pool.length === 0) return []
 
-    const userTopics = profile.topics || []
+    const targetTopicLower = activeSkillGoal.toLowerCase()
     const preferredFormat = profile.format || 'Video'
-    const userExp = profile.experience || 'Intermediate'
+    const userExp = profile.experience || 'Beginner'
 
     return pool.map((item) => {
       let cb = 72.0
@@ -533,34 +523,20 @@ export default function App() {
         cb = Math.min(100, Math.max(35, Math.round(item.score * 100)))
       } else {
         const titleAndDesc = (item.title + ' ' + (item.description || '') + ' ' + (item.topic || '')).toLowerCase()
-        let topicMatches = 0
-        userTopics.forEach(t => {
-          if (titleAndDesc.includes(t.toLowerCase())) topicMatches++
-        })
-        cb += Math.min(25, topicMatches * 7.5)
-
-        if (item.type && item.type.toLowerCase() === preferredFormat.toLowerCase()) {
-          cb += 12.0
-        } else {
-          cb -= 6.0
-        }
-
-        if (item.difficulty && item.difficulty.toLowerCase() === userExp.toLowerCase()) {
-          cb += 8.0
-        }
+        if (titleAndDesc.includes(targetTopicLower)) cb += 18.0
+        if (item.type && item.type.toLowerCase() === preferredFormat.toLowerCase()) cb += 10.0
+        if (item.difficulty && item.difficulty.toLowerCase() === userExp.toLowerCase()) cb += 6.0
       }
       cb = Math.min(99.0, Math.max(30.0, cb))
 
       const baseRating = item.rating ? (item.rating / 5.0) * 80.0 : 75.0
-      const signalAffinity = Math.min(20.0, (signals.completed * 1.5 + signals.saved * 1.0 + signals.ratings * 1.2 + signals.sessions * 0.8))
+      const signalAffinity = Math.min(20.0, (signals.completed * 2.0 + signals.saved * 1.5))
       let cf = baseRating + (signalAffinity * 0.5)
       cf = Math.min(98.0, Math.max(35.0, cf))
 
       let coldStartBoost = 0
-      const isNewResource = item.source === 'Dev.to' || (item.id && String(item.id).startsWith('res-new'))
-      if (coldStartEnabled && isNewResource) {
-        coldStartBoost = 4.5
-      }
+      const isNewResource = item.source === 'Dev.to'
+      if (coldStartEnabled && isNewResource) coldStartBoost = 4.5
 
       const weightedCb = alpha * cb
       const weightedCf = (1 - alpha) * cf
@@ -578,14 +554,14 @@ export default function App() {
         isNew: isNewResource
       }
     })
-  }, [rawBackendRecs, catalog, profile, signals, alpha, coldStartEnabled])
+  }, [rawBackendRecs, catalog, activeSkillGoal, profile, signals, alpha, coldStartEnabled])
 
   // Filtered recommendations for Learner Platform and Catalog
   const filteredCourses = useMemo(() => {
     let pool = activeTab === 'catalog' ? catalog : computedRecommendations
 
-    // Search query
-    if (searchQuery.trim()) {
+    // Search query within the filtered results
+    if (searchQuery.trim() && activeTab === 'catalog') {
       const q = searchQuery.toLowerCase()
       pool = pool.filter(c =>
         (c.title && c.title.toLowerCase().includes(q)) ||
@@ -646,9 +622,6 @@ export default function App() {
     return 'badge-balanced'
   }, [alpha])
 
-  // Active Roadmap
-  const currentRoadmap = ROADMAP_TRACKS[activeRoadmapTrack] || ROADMAP_TRACKS.ai
-
   return (
     <div className="app-layout">
       {/* 1. SIDEBAR NAVIGATION */}
@@ -693,7 +666,7 @@ export default function App() {
 
         <nav className="sidebar-nav">
           <div className="nav-group-label">
-            {platformMode === 'learner' ? 'LEARNER PORTAL' : 'WORKSPACE SECTIONS'}
+            {platformMode === 'learner' ? 'STUDENT PORTAL' : 'WORKSPACE SECTIONS'}
           </div>
 
           <ul className="nav-list">
@@ -725,8 +698,8 @@ export default function App() {
                       <circle cx="6" cy="18" r="3"></circle>
                       <path d="M18 9a9 9 0 0 1-9 9"></path>
                     </svg>
-                    <span>Career Roadmap</span>
-                    <span className="nav-pill pill-cb">Path</span>
+                    <span>Dynamic Roadmap</span>
+                    <span className="nav-pill pill-cb">Live</span>
                   </a>
                 </li>
 
@@ -835,9 +808,9 @@ export default function App() {
 
           {platformMode === 'learner' && (
             <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', marginBottom: '0.35rem' }}>ACTIVE LEARNER</div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>{currentUser ? currentUser.name : 'Guest User'}</div>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.2rem' }}>Goal: {profile.goal}</div>
+              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', marginBottom: '0.35rem' }}>CURRENT SKILL TARGET</div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>{activeSkillGoal}</div>
+              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.2rem' }}>Level: {profile.experience} • {profile.format}s</div>
             </div>
           )}
         </nav>
@@ -852,7 +825,7 @@ export default function App() {
             Render API &amp; Supabase PostgreSQL persistent data sync.
           </p>
           <div className="status-meta">
-            <span>Auth: Persistent Local &amp; Cloud</span>
+            <span>Student: {currentUser ? currentUser.username : 'Guest Session'}</span>
           </div>
         </div>
       </aside>
@@ -882,7 +855,7 @@ export default function App() {
           </button>
         </header>
 
-        {/* Top Header Bar with Mode Switcher & User Account */}
+        {/* Top Header Bar with Mode Switcher & Student Account Button */}
         <header className="workspace-header">
           <div className="header-left">
             <div className="breadcrumbs">
@@ -901,8 +874,8 @@ export default function App() {
               </span>
             </div>
             <h2 className="workspace-title">
-              {platformMode === 'learner' && activeTab === 'home' && 'Personalized Learning Curriculum'}
-              {platformMode === 'learner' && activeTab === 'roadmap' && 'Step-by-Step Learning Milestone Roadmap'}
+              {platformMode === 'learner' && activeTab === 'home' && 'Adaptive Learning Recommendations'}
+              {platformMode === 'learner' && activeTab === 'roadmap' && `${activeSkillGoal} Roadmap`}
               {platformMode === 'learner' && activeTab === 'catalog' && 'Course & Article Catalog'}
               {platformMode === 'learner' && activeTab === 'dashboard' && 'Student Learning Dashboard'}
               {platformMode === 'lab' && 'Hybrid Model Lab & Parameters'}
@@ -975,13 +948,22 @@ export default function App() {
                 )}
               </div>
             ) : (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => { setAuthTab('login'); setAuthModalOpen(true); }}
-              >
-                Sign In / Register
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => { setAuthTab('login'); setAuthModalOpen(true); }}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => { setAuthTab('register'); setAuthModalOpen(true); }}
+                >
+                  Register
+                </button>
+              </div>
             )}
 
             <button
@@ -1000,12 +982,12 @@ export default function App() {
            ========================================================================= */}
         {platformMode === 'learner' && (
           <>
-            {/* FEATURE 2: CURRENT LEARNING CONTENT BANNER ("CONTINUE LEARNING") */}
+            {/* ONLY DISPLAY "CONTINUE LEARNING" IF STUDENT HAS AN ACTUAL ACTIVE COURSE! */}
             {activeCourse && (
               <section className="continue-learning-card">
                 <div className="continue-learning-info">
                   <div className="continue-eyebrow">
-                    <span>⚡</span> CURRENT LEARNING CONTENT
+                    <span>⚡</span> CURRENT IN-PROGRESS COURSE
                   </div>
                   <h3 className="continue-title">{activeCourse.title}</h3>
                   <div className="continue-meta">
@@ -1018,10 +1000,10 @@ export default function App() {
 
                   <div className="continue-progress-wrap">
                     <div className="continue-progress-bar">
-                      <div className="continue-progress-fill" style={{ width: `${activeCourse.progress || 50}%` }}></div>
+                      <div className="continue-progress-fill" style={{ width: `${activeCourse.progress || 25}%` }}></div>
                     </div>
                     <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#34d399' }}>
-                      {activeCourse.progress || 50}% Done
+                      {activeCourse.progress || 25}% Done
                     </span>
                   </div>
                 </div>
@@ -1056,54 +1038,50 @@ export default function App() {
             {/* TAB: DISCOVER / HOME VIEW */}
             {activeTab === 'home' && (
               <>
-                {/* Hero Discovery Section */}
+                {/* Hero Discovery Section: OPEN SEARCH LANDING PAGE */}
                 <section className="learner-hero">
                   <span className="learner-hero-eyebrow">
-                    <span>✨</span> COURSERA &amp; SWAYAM STYLE ADAPTIVE CURRICULUM
+                    <span>✨</span> WHAT DO YOU WANT TO LEARN?
                   </span>
                   <h1 className="learner-hero-title">
-                    Master In-Demand Skills with <span className="gradient-text">Curated Learning</span>
+                    Type Any Skill &amp; <span className="gradient-text">Generate Your Roadmap</span>
                   </h1>
                   <p className="learner-hero-desc">
-                    LearnIQ saves your progress and dynamically curates 300+ verified courses, tutorials, and technical articles tailored to your goals.
+                    Search any technical topic below. LearnIQ instantly builds a customized 4-stage career roadmap and curates matching courses from our 300+ database.
                   </p>
 
-                  {/* Search Bar */}
-                  <div className="learner-search-bar">
+                  {/* Search Bar that immediately generates roadmap & recommendations */}
+                  <form onSubmit={handleSkillSearch} className="learner-search-bar">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ marginRight: '0.75rem', flexShrink: 0 }}>
                       <circle cx="11" cy="11" r="8"></circle>
                       <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                     <input
                       type="text"
-                      placeholder="Search courses, skills, topics (e.g. Python, AWS, Generative AI)..."
+                      placeholder="Type a skill (e.g. Machine Learning, React, Python, Cloud, MLOps)..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     <button
-                      type="button"
+                      type="submit"
                       className="btn-launch"
                       style={{ padding: '0.55rem 1.25rem' }}
-                      onClick={() => {
-                        const recGrid = document.getElementById('curatedSection')
-                        if (recGrid) recGrid.scrollIntoView({ behavior: 'smooth' })
-                      }}
                     >
-                      Find Courses
+                      {loadingRecs ? 'Generating...' : 'Generate Roadmap'}
                     </button>
-                  </div>
+                  </form>
 
                   {/* Quick Topics */}
                   <div className="learner-quick-topics">
                     <span>Popular skills:</span>
-                    {['Generative AI', 'Python', 'Machine Learning', 'Cloud DevOps', 'Web Development'].map(t => (
+                    {['Machine Learning', 'Generative AI', 'Python', 'Web Development', 'Cloud Computing'].map(t => (
                       <span
                         key={t}
                         className="quick-topic-chip"
                         onClick={() => {
                           setSearchQuery(t)
-                          const recGrid = document.getElementById('curatedSection')
-                          if (recGrid) recGrid.scrollIntoView({ behavior: 'smooth' })
+                          setActiveSkillGoal(t)
+                          fetchRecommendationsForGoal(t, profile.experience, profile.format)
                         }}
                       >
                         {t}
@@ -1112,26 +1090,89 @@ export default function App() {
                   </div>
                 </section>
 
-                {/* FEATURE 3: PREVIEW OF CAREER ROADMAP BANNER */}
-                <section style={{ marginBottom: '2.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: '1.75rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1.5rem' }}>
-                  <div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', marginBottom: '0.35rem' }}>
-                      <span>🗺️</span> STRUCTURED CAREER MILESTONES
+                {/* GUEST BANNER: INVITE TO REGISTER IF NOT LOGGED IN */}
+                {!currentUser && (
+                  <div style={{
+                    marginBottom: '2.5rem',
+                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: '1.25rem 1.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '1rem'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <span style={{ fontSize: '1.5rem' }}>🎓</span>
+                      <div>
+                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>Save your customized roadmap and course progress</div>
+                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Create a free student account with a username and password to keep your progress across sessions.</div>
+                      </div>
                     </div>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', marginBottom: '0.3rem' }}>
-                      {currentRoadmap.title}
-                    </h3>
-                    <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0, maxWidth: 600 }}>
-                      Track your progressive milestone achievements step-by-step from beginner fundamentals to production architecture.
-                    </p>
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => { setAuthTab('register'); setAuthModalOpen(true); }}
+                    >
+                      Create Free Account
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setActiveTab('roadmap')}
-                  >
-                    View Full Roadmap →
-                  </button>
+                )}
+
+                {/* DYNAMIC ROADMAP PREVIEW (GENERATED DIRECTLY FOR THE TYPED TOPIC!) */}
+                <section style={{ marginBottom: '2.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: '1.75rem 2rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', marginBottom: '0.35rem' }}>
+                        <span>🗺️</span> DYNAMIC CAREER ROADMAP (FOR "{activeSkillGoal.toUpperCase()}")
+                      </div>
+                      <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                        {currentDynamicRoadmap.title}
+                      </h3>
+                      <p style={{ fontSize: '0.825rem', color: '#94a3b8', margin: 0, marginTop: '0.2rem' }}>
+                        {currentDynamicRoadmap.description} Click any stage to view matching courses.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setActiveTab('roadmap')}
+                    >
+                      Inspect Detailed Roadmap →
+                    </button>
+                  </div>
+
+                  <div className="roadmap-steps-grid">
+                    {currentDynamicRoadmap.steps.map(st => (
+                      <div
+                        key={st.id}
+                        className={`roadmap-step-card ${st.status === 'completed' ? 'is-completed' : ''} ${st.status === 'in-progress' ? 'is-active' : ''}`}
+                        onClick={() => {
+                          const recGrid = document.getElementById('curatedSection')
+                          if (recGrid) recGrid.scrollIntoView({ behavior: 'smooth' })
+                        }}
+                      >
+                        <div className="step-header-row">
+                          <div className="step-number-badge">
+                            {st.status === 'completed' ? '✓' : st.id}
+                          </div>
+                          <span className={`step-status-tag ${st.status === 'completed' ? 'tag-completed' : st.status === 'in-progress' ? 'tag-in-progress' : 'tag-upcoming'}`}>
+                            {st.status === 'completed' ? 'COMPLETED' : st.status === 'in-progress' ? 'IN PROGRESS' : 'UPCOMING'}
+                          </span>
+                        </div>
+                        <h4 className="step-title">{st.title}</h4>
+                        <p className="step-desc">{st.desc}</p>
+                        <div className="step-skills">
+                          {st.skills.map((sk, idx) => (
+                            <span key={idx} className="step-skill-pill">{sk}</span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </section>
 
                 {/* Browse by Domain */}
@@ -1146,105 +1187,19 @@ export default function App() {
                       <div
                         key={d.id}
                         className={`domain-card ${selectedDomain === d.id ? 'active' : ''}`}
-                        onClick={() => setSelectedDomain(d.id)}
+                        onClick={() => {
+                          setSelectedDomain(d.id)
+                          if (d.name !== 'All Subjects') {
+                            setActiveSkillGoal(d.name)
+                            fetchRecommendationsForGoal(d.name, profile.experience, profile.format)
+                          }
+                        }}
                       >
                         <div className="domain-card-icon">{d.icon}</div>
                         <div className="domain-card-title">{d.name}</div>
                         <div className="domain-card-count">{d.count} Courses &amp; Articles</div>
                       </div>
                     ))}
-                  </div>
-                </section>
-
-                {/* Preferences Tuner */}
-                <section className="onboarding-card">
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-                    <div>
-                      <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', marginBottom: '0.25rem' }}>
-                        Customize Your Curriculum
-                      </h3>
-                      <p style={{ fontSize: '0.825rem', color: '#94a3b8', margin: 0 }}>
-                        Tell us your learning pace and preferred format so we can recommend the best content.
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      disabled={loadingRecs}
-                      onClick={() => fetchBackendRecommendations(profile)}
-                    >
-                      {loadingRecs ? 'Updating Recommendations...' : 'Refresh My Feed'}
-                    </button>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem' }}>
-                    <div>
-                      <label className="form-label">Skill Level</label>
-                      <div className="select-wrapper">
-                        <select
-                          className="form-select"
-                          value={profile.experience}
-                          onChange={(e) => setProfile(prev => ({ ...prev, experience: e.target.value }))}
-                        >
-                          <option value="Beginner">Beginner (Fundamentals)</option>
-                          <option value="Intermediate">Intermediate (Hands-on)</option>
-                          <option value="Advanced">Advanced (Production/Architecture)</option>
-                        </select>
-                        <span className="select-arrow" aria-hidden="true">▼</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="form-label">Preferred Format</label>
-                      <div className="select-wrapper">
-                        <select
-                          className="form-select"
-                          value={profile.format}
-                          onChange={(e) => setProfile(prev => ({ ...prev, format: e.target.value }))}
-                        >
-                          <option value="Video">Video Courses (YouTube)</option>
-                          <option value="Article">Technical Articles (Dev.to)</option>
-                          <option value="Course">Full Curriculum</option>
-                          <option value="Interactive">Hands-on Labs</option>
-                        </select>
-                        <span className="select-arrow" aria-hidden="true">▼</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="form-label">Primary Goal</label>
-                      <div className="select-wrapper">
-                        <select
-                          className="form-select"
-                          value={profile.goal}
-                          onChange={(e) => setProfile(prev => ({ ...prev, goal: e.target.value }))}
-                        >
-                          <option value="Build AI projects">Build Practical Projects</option>
-                          <option value="Learn fundamentals">Learn Core Fundamentals</option>
-                          <option value="Career transition">Career Transition</option>
-                          <option value="Prepare for exams">Exam &amp; Certification Prep</option>
-                        </select>
-                        <span className="select-arrow" aria-hidden="true">▼</span>
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="form-label">Weekly Commitment</label>
-                      <div className="select-wrapper">
-                        <select
-                          className="form-select"
-                          value={profile.weeklyTime}
-                          onChange={(e) => setProfile(prev => ({ ...prev, weeklyTime: e.target.value }))}
-                        >
-                          <option value="1-3">1–3 hours/week</option>
-                          <option value="4-6">4–6 hours/week</option>
-                          <option value="7-10">7–10 hours/week</option>
-                          <option value="10+">10+ hours/week</option>
-                        </select>
-                        <span className="select-arrow" aria-hidden="true">▼</span>
-                      </div>
-                    </div>
                   </div>
                 </section>
 
@@ -1255,11 +1210,11 @@ export default function App() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
                         <span className="badge-prod-connected">
                           <span className="pulse-dot-green"></span>
-                          CURATED FOR {currentUser?.name ? currentUser.name.toUpperCase() : 'YOU'}
+                          CURATED FOR {currentUser?.name ? currentUser.name.toUpperCase() : 'NEW STUDENT'}
                         </span>
                         <span className="results-badge">{filteredCourses.length} matched</span>
                       </div>
-                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>Recommended Courses</h2>
+                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>Recommended Courses for "{activeSkillGoal}"</h2>
                       <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0 }}>
                         Ranked by affinity with your {profile.experience} level and interest in {profile.format}s.
                       </p>
@@ -1381,47 +1336,43 @@ export default function App() {
               </>
             )}
 
-            {/* TAB: FEATURE 3 - STEP-BY-STEP MILESTONE CAREER ROADMAP */}
+            {/* TAB: FEATURE 3 - DYNAMIC CAREER ROADMAP VIEW */}
             {activeTab === 'roadmap' && (
               <section className="roadmap-container">
                 <div className="roadmap-header">
                   <div>
                     <span className="learner-hero-eyebrow">
-                      <span>🗺️</span> CAREER TRAJECTORY ROADMAP
+                      <span>🗺️</span> DYNAMIC CAREER ROADMAP
                     </span>
-                    <h2 className="roadmap-track-name">{currentRoadmap.title}</h2>
+                    <h2 className="roadmap-track-name">{currentDynamicRoadmap.title}</h2>
                     <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: 680, marginTop: '0.4rem', margin: 0 }}>
-                      {currentRoadmap.description}
+                      {currentDynamicRoadmap.description}
                     </p>
                   </div>
 
-                  {/* Switch Roadmap Track */}
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button
-                      type="button"
-                      className={`btn-chip-sm ${activeRoadmapTrack === 'ai' ? 'active' : ''}`}
-                      onClick={() => setActiveRoadmapTrack('ai')}
-                    >
-                      AI &amp; ML Track
+                  {/* Skill Goal Input on Roadmap Page */}
+                  <form onSubmit={handleSkillSearch} style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input
+                      type="text"
+                      className="auth-input"
+                      style={{ minWidth: 220 }}
+                      placeholder="Type a new skill (e.g. React)..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <button type="submit" className="btn btn-primary">
+                      Update Roadmap
                     </button>
-                    <button
-                      type="button"
-                      className={`btn-chip-sm ${activeRoadmapTrack === 'web' ? 'active' : ''}`}
-                      onClick={() => setActiveRoadmapTrack('web')}
-                    >
-                      Full-Stack Track
-                    </button>
-                  </div>
+                  </form>
                 </div>
 
                 {/* Milestone Steps Grid */}
                 <div className="roadmap-steps-grid">
-                  {currentRoadmap.steps.map((st) => (
+                  {currentDynamicRoadmap.steps.map((st) => (
                     <div
                       key={st.id}
                       className={`roadmap-step-card ${st.status === 'completed' ? 'is-completed' : ''} ${st.status === 'in-progress' ? 'is-active' : ''}`}
                       onClick={() => {
-                        setSelectedDomain(st.topic)
                         setActiveTab('home')
                         showToast(`Filtered recommendations for: ${st.title}`, 'info')
                       }}
@@ -1450,23 +1401,6 @@ export default function App() {
                       </div>
                     </div>
                   ))}
-                </div>
-
-                <div style={{ marginTop: '2.5rem', padding: '1.25rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>💡</span>
-                    <div>
-                      <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>Want to customize this roadmap for your company or university?</div>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Clicking any milestone filters your feed with relevant verified courses.</div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => setActiveTab('home')}
-                  >
-                    View Recommended Courses
-                  </button>
                 </div>
               </section>
             )}
@@ -1641,8 +1575,8 @@ export default function App() {
                       ⚡
                     </div>
                     <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{signals.sessions}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Learning Sessions</div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{activeCourse ? 1 : 0}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>In-Progress Course</div>
                     </div>
                   </div>
                 </div>
@@ -1657,7 +1591,7 @@ export default function App() {
 
                   {completedCourses.length === 0 ? (
                     <div className="no-results-panel" style={{ padding: '2rem' }}>
-                      <p style={{ margin: 0 }}>No completed courses yet. Click "Mark Done" on any recommended course to track your milestones here!</p>
+                      <p style={{ margin: 0 }}>No completed courses yet. Search for a skill above and click "Mark Done" to track your achievements here!</p>
                     </div>
                   ) : (
                     <div className="recommendations-grid">
@@ -1789,7 +1723,7 @@ export default function App() {
                     <div className="meter-bar-track">
                       <div className="meter-bar-fill" style={{ width: `${profileCompleteness}%` }}></div>
                     </div>
-                    <div className="metric-caption">{profile.topics?.length || 0} topic vectors active</div>
+                    <div className="metric-caption">Dynamic goal: "{activeSkillGoal}"</div>
                   </div>
 
                   <div className="metric-card">
@@ -1801,7 +1735,7 @@ export default function App() {
                       <span className="mini-signal-badge">{signals.ratings} Ratings</span>
                       <span className="mini-signal-badge">{signals.sessions} Sessions</span>
                     </div>
-                    <div className="metric-caption">Real &amp; simulated learner behavior logs</div>
+                    <div className="metric-caption">Real student interactions</div>
                   </div>
 
                   <div className="metric-card">
@@ -1832,19 +1766,19 @@ export default function App() {
                   </div>
                 </div>
 
-                <form className="cb-form" onSubmit={(e) => { e.preventDefault(); fetchBackendRecommendations(profile); }}>
+                <form className="cb-form" onSubmit={(e) => { e.preventDefault(); fetchRecommendationsForGoal(activeSkillGoal, profile.experience, profile.format); }}>
                   <div className="form-group full-width-group">
                     <label className="form-label">
-                      <span>Full Name</span>
-                      <span className="label-hint">Profile Identifier</span>
+                      <span>Target Learning Skill</span>
+                      <span className="label-hint">Dynamic Goal</span>
                     </label>
                     <input
                       type="text"
                       className="form-select"
                       style={{ paddingRight: '1rem' }}
-                      value={profile.name}
-                      onChange={(e) => setProfile(prev => ({ ...prev, name: e.target.value }))}
-                      placeholder="e.g. Alan S."
+                      value={activeSkillGoal}
+                      onChange={(e) => setActiveSkillGoal(e.target.value)}
+                      placeholder="e.g. Machine Learning, Python..."
                     />
                   </div>
 
@@ -1869,26 +1803,6 @@ export default function App() {
 
                   <div className="form-group">
                     <label className="form-label">
-                      <span>Primary Goal</span>
-                      <span className="label-hint">Curriculum focus target</span>
-                    </label>
-                    <div className="select-wrapper">
-                      <select
-                        className="form-select"
-                        value={profile.goal}
-                        onChange={(e) => setProfile(prev => ({ ...prev, goal: e.target.value }))}
-                      >
-                        <option value="Build AI projects">Build AI projects</option>
-                        <option value="Prepare for exams">Prepare for exams</option>
-                        <option value="Learn fundamentals">Learn fundamentals</option>
-                        <option value="Career transition">Career transition</option>
-                      </select>
-                      <span className="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
                       <span>Preferred Format</span>
                       <span className="label-hint">Prioritized media</span>
                     </label>
@@ -1901,27 +1815,6 @@ export default function App() {
                         <option value="Video">Video (YouTube)</option>
                         <option value="Article">Article (Dev.to)</option>
                         <option value="Course">Full Course</option>
-                        <option value="Interactive">Interactive / Project</option>
-                      </select>
-                      <span className="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      <span>Weekly Learning Time</span>
-                      <span className="label-hint">Pacing availability</span>
-                    </label>
-                    <div className="select-wrapper">
-                      <select
-                        className="form-select"
-                        value={profile.weeklyTime}
-                        onChange={(e) => setProfile(prev => ({ ...prev, weeklyTime: e.target.value }))}
-                      >
-                        <option value="1-3">1–3 hours</option>
-                        <option value="4-6">4–6 hours</option>
-                        <option value="7-10">7–10 hours</option>
-                        <option value="10+">10+ hours</option>
                       </select>
                       <span className="select-arrow" aria-hidden="true">▼</span>
                     </div>
@@ -1929,11 +1822,10 @@ export default function App() {
 
                   <div className="form-group full-width-group">
                     <div className="form-label">
-                      <span>Topics of Interest</span>
+                      <span>Domain Topics</span>
                       <span className="label-hint">{profile.topics?.length || 0} selected</span>
                     </div>
-                    <p className="form-helper">Toggle domain keywords to adjust content-similarity scoring vectors:</p>
-                    <div className="chips-container" role="group" aria-label="Topics of Interest toggles">
+                    <div className="chips-container" role="group">
                       {TOPIC_OPTIONS.map(topic => {
                         const active = profile.topics?.includes(topic)
                         return (
@@ -1958,7 +1850,7 @@ export default function App() {
                   <div className="section-title-wrap">
                     <span className="section-category-pill pill-cf">COLLABORATIVE INPUTS (CF)</span>
                     <h3 id="cfSectionHeading" className="section-title">Learning Signals</h3>
-                    <p className="section-subtitle">Real and simulated user interaction patterns feeding the matrix factorization model.</p>
+                    <p className="section-subtitle">Real interaction patterns feeding collaborative matrix factorization.</p>
                   </div>
                   <div className="section-badge-icon badge-cf-icon" aria-hidden="true">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -1975,9 +1867,9 @@ export default function App() {
                     <div className="signal-info">
                       <div className="signal-label-row">
                         <span className="signal-title">Completed Resources</span>
-                        <span className="signal-tag">History</span>
+                        <span className="signal-tag">Real</span>
                       </div>
-                      <p className="signal-desc">Completed modules in learner trajectory ({interactions.completed.length} live).</p>
+                      <p className="signal-desc">Completed modules in your student trajectory ({interactions.completed.length} total).</p>
                     </div>
                     <div className="stepper-controls">
                       <button type="button" className="btn-stepper" onClick={() => adjustSignal('completed', -1)}>−</button>
@@ -1990,9 +1882,9 @@ export default function App() {
                     <div className="signal-info">
                       <div className="signal-label-row">
                         <span className="signal-title">Saved Resources</span>
-                        <span className="signal-tag">Intent</span>
+                        <span className="signal-tag">Wishlist</span>
                       </div>
-                      <p className="signal-desc">Bookmarks or wishlist activity in library ({interactions.saved.length} live).</p>
+                      <p className="signal-desc">Saved bookmarks in library ({interactions.saved.length} total).</p>
                     </div>
                     <div className="stepper-controls">
                       <button type="button" className="btn-stepper" onClick={() => adjustSignal('saved', -1)}>−</button>
@@ -2004,25 +1896,10 @@ export default function App() {
                   <div className="signal-card">
                     <div className="signal-info">
                       <div className="signal-label-row">
-                        <span className="signal-title">Explicit Ratings</span>
-                        <span className="signal-tag">Feedback</span>
-                      </div>
-                      <p className="signal-desc">Ratings submitted across completed courses.</p>
-                    </div>
-                    <div className="stepper-controls">
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('ratings', -1)}>−</button>
-                      <span className="stepper-value">{signals.ratings}</span>
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('ratings', 1)}>+</button>
-                    </div>
-                  </div>
-
-                  <div className="signal-card">
-                    <div className="signal-info">
-                      <div className="signal-label-row">
-                        <span className="signal-title">Recent Sessions</span>
+                        <span className="signal-title">Active Study Sessions</span>
                         <span className="signal-tag">Recency</span>
                       </div>
-                      <p className="signal-desc">Active study sessions logged in the last 14-day window.</p>
+                      <p className="signal-desc">Logged study sessions in your active account.</p>
                     </div>
                     <div className="stepper-controls">
                       <button type="button" className="btn-stepper" onClick={() => adjustSignal('sessions', -1)}>−</button>
@@ -2030,11 +1907,6 @@ export default function App() {
                       <button type="button" className="btn-stepper" onClick={() => adjustSignal('sessions', 1)}>+</button>
                     </div>
                   </div>
-                </div>
-
-                <div className="signals-summary-box">
-                  <span className="info-icon" aria-hidden="true">ℹ</span>
-                  <span>These counters adjust TruncatedSVD collaborative affinity matrices to reflect peer behavior.</span>
                 </div>
               </section>
             </div>
@@ -2143,7 +2015,7 @@ export default function App() {
                   </div>
                   <h3 id="recSectionHeading" className="rec-title">Recommended Learning Resources</h3>
                   <p className="rec-subtitle">
-                    Dynamically ranked by the hybrid function H = α · CB + (1−α) · CF against live Supabase courses.
+                    Dynamically ranked by H = α · CB + (1−α) · CF against live Supabase courses.
                   </p>
                 </div>
               </div>
@@ -2276,13 +2148,13 @@ export default function App() {
               <span>Supabase PostgreSQL DB</span>
             </div>
             <div className="footer-right">
-              <span>{platformMode === 'learner' ? 'Empowering 300+ Tech Learners Worldwide' : 'Formulation: H = α · CB + (1 − α) · CF'}</span>
+              <span>{platformMode === 'learner' ? 'Empowering 300+ Tech Learners' : 'Formulation: H = α · CB + (1 − α) · CF'}</span>
             </div>
           </div>
         </footer>
       </main>
 
-      {/* FEATURE 1: USER AUTHENTICATION / REGISTRATION MODAL */}
+      {/* STUDENT REGISTRATION / LOGIN MODAL */}
       {authModalOpen && (
         <div className="auth-modal-overlay" onClick={() => setAuthModalOpen(false)}>
           <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
@@ -2292,7 +2164,7 @@ export default function App() {
                   {authTab === 'login' ? 'Student Sign In' : 'Create Free Student Account'}
                 </h3>
                 <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>
-                  Save your learning trajectory and course roadmap across sessions.
+                  Save your learning trajectory and dynamic roadmap across sessions.
                 </p>
               </div>
               <button
@@ -2341,7 +2213,7 @@ export default function App() {
                 <input
                   type="text"
                   className="auth-input"
-                  placeholder="e.g. alan_s"
+                  placeholder="e.g. alansomi"
                   value={authUsername}
                   onChange={(e) => setAuthUsername(e.target.value)}
                   required
@@ -2361,14 +2233,14 @@ export default function App() {
               </div>
 
               <button type="submit" className="auth-submit-btn">
-                {authTab === 'login' ? 'Sign In to My Account' : 'Register & Start Learning'}
+                {authTab === 'login' ? 'Sign In to My Account' : 'Register & Start Clean'}
               </button>
 
               <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.75rem', color: '#64748b' }}>
                 {authTab === 'login' ? (
                   <span>Don't have an account? <strong style={{ color: '#38bdf8', cursor: 'pointer' }} onClick={() => setAuthTab('register')}>Register now</strong></span>
                 ) : (
-                  <span>Already have an account? <strong style={{ color: '#38bdf8', cursor: 'pointer' }} onClick={() => setAuthTab('login')}>Sign In</strong></span>
+                  <span>Already registered? <strong style={{ color: '#38bdf8', cursor: 'pointer' }} onClick={() => setAuthTab('login')}>Sign In</strong></span>
                 )}
               </div>
             </form>
