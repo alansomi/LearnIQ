@@ -2,994 +2,888 @@ import React, { useState, useEffect, useMemo } from 'react'
 
 const API_BASE = "https://learniq-765n.onrender.com"
 
-// Available topics for chip toggling
-const TOPIC_OPTIONS = [
+// --------------------------------------------------------------------------
+// 1. COMPREHENSIVE LOCAL DATASET (24+ High-Impact Industry Resources)
+// --------------------------------------------------------------------------
+const DEMO_CATALOG = [
+  {
+    id: 'lr-1',
+    title: 'Machine Learning Specialization',
+    provider: 'DeepLearning.AI & Stanford',
+    type: 'Course',
+    topic: 'Machine Learning',
+    difficulty: 'Beginner',
+    duration: '10 hours',
+    rating: 4.9,
+    learnerCount: '340k learners',
+    tags: ['Machine Learning', 'Python', 'Algorithms', 'Supervised Learning'],
+    url: 'https://www.coursera.org/specializations/machine-learning-introduction',
+    description: 'A foundational, industry-standard program taught by Andrew Ng covering supervised learning, neural networks, decision trees, and best practices.',
+    outcomes: [
+      'Build and train supervised machine learning models for prediction and binary classification.',
+      'Understand core optimization concepts including gradient descent, cost functions, and regularization.',
+      'Apply decision trees, random forests, and gradient boosting to real-world datasets.'
+    ],
+    prerequisites: 'Basic Python programming syntax and high school algebra.',
+    isFree: true,
+    hasCert: true
+  },
+  {
+    id: 'lr-2',
+    title: 'Generative AI with Large Language Models',
+    provider: 'AWS & DeepLearning.AI',
+    type: 'Course',
+    topic: 'Generative AI',
+    difficulty: 'Intermediate',
+    duration: '8 hours',
+    rating: 4.8,
+    learnerCount: '190k learners',
+    tags: ['Generative AI', 'LLMs', 'Transformers', 'Fine-Tuning', 'RLHF'],
+    url: 'https://www.deeplearning.ai/courses/generative-ai-with-llms/',
+    description: 'Deep dive into the transformer architecture, pre-training objectives, instruction fine-tuning, PEFT/LoRA, and Reinforcement Learning from Human Feedback.',
+    outcomes: [
+      'Describe the key steps in a generative AI model lifecycle from data selection to deployment.',
+      'Fine-tune open-source models using Parameter-Efficient Fine-Tuning (PEFT) and LoRA.',
+      'Evaluate model hallucinations, alignment, and quantify performance using ROUGE and BLEU metrics.'
+    ],
+    prerequisites: 'Solid Python skills and foundational understanding of deep learning concepts.',
+    isFree: false,
+    hasCert: true
+  },
+  {
+    id: 'lr-3',
+    title: 'CS50\'s Introduction to Artificial Intelligence with Python',
+    provider: 'Harvard University',
+    type: 'Course',
+    topic: 'Artificial Intelligence',
+    difficulty: 'Intermediate',
+    duration: '12 hours',
+    rating: 4.9,
+    learnerCount: '520k learners',
+    tags: ['Artificial Intelligence', 'Search Algorithms', 'Optimization', 'Knowledge Graphs'],
+    url: 'https://cs50.harvard.edu/ai/',
+    description: 'Explore the concepts and algorithms at the foundation of modern AI, diving into graph search, classification, optimization, and reinforcement learning.',
+    outcomes: [
+      'Implement classical AI algorithms including A* search, adversarial game tree search, and constraint satisfaction.',
+      'Construct probabilistic reasoning models and Markov decision processes from scratch.',
+      'Design neural network pipelines for natural language processing and computer vision.'
+    ],
+    prerequisites: 'Prior experience in Python programming and basic algorithmic data structures.',
+    isFree: true,
+    hasCert: true
+  },
+  {
+    id: 'lr-4',
+    title: 'PyTorch for Deep Learning & Neural Networks Bootcamp',
+    provider: 'freeCodeCamp & Daniel Bourke',
+    type: 'Video',
+    topic: 'Deep Learning',
+    difficulty: 'Beginner',
+    duration: '6 hours',
+    rating: 4.9,
+    learnerCount: '410k learners',
+    tags: ['Deep Learning', 'PyTorch', 'Computer Vision', 'Tensors', 'Neural Networks'],
+    url: 'https://www.youtube.com/watch?v=V_xro1bcAuA',
+    description: 'Step-by-step hands-on guide to PyTorch tensors, autograd, building convolutional neural networks, custom datasets, and computer vision classification.',
+    outcomes: [
+      'Master PyTorch tensor operations, GPU acceleration, and backward propagation.',
+      'Build custom convolutional neural networks (CNNs) from scratch and train on image data.',
+      'Save, export, and load trained model checkpoints for web inference.'
+    ],
+    prerequisites: 'Basic Python syntax; no prior machine learning experience required.',
+    isFree: true,
+    hasCert: false
+  },
+  {
+    id: 'lr-5',
+    title: 'Hugging Face NLP Course: Transformers & Pipelines',
+    provider: 'Hugging Face Official',
+    type: 'Interactive lesson',
+    topic: 'Natural Language Processing',
+    difficulty: 'Intermediate',
+    duration: '7 hours',
+    rating: 4.9,
+    learnerCount: '275k learners',
+    tags: ['NLP', 'Transformers', 'BERT', 'Tokenization', 'Hugging Face'],
+    url: 'https://huggingface.co/learn/nlp-course',
+    description: 'Learn how to use Hugging Face transformers, datasets, tokenizers, and accelerate libraries for state-of-the-art NLP classification, summarization, and QA.',
+    outcomes: [
+      'Understand subword tokenization (BPE, WordPiece) and pipeline abstractions.',
+      'Fine-tune pre-trained transformer backbones (BERT, RoBERTa) on domain-specific corpora.',
+      'Deploy interactive model demos directly onto Hugging Face Spaces with Gradio.'
+    ],
+    prerequisites: 'Intermediate Python, familiarity with PyTorch or TensorFlow tensors.',
+    isFree: true,
+    hasCert: true
+  },
+  {
+    id: 'lr-6',
+    title: 'Full Stack MLOps: Production Pipeline Engineering',
+    provider: 'Made With ML',
+    type: 'Tutorial',
+    topic: 'MLOps',
+    difficulty: 'Advanced',
+    duration: '9 hours',
+    rating: 4.9,
+    learnerCount: '145k learners',
+    tags: ['MLOps', 'CI/CD', 'Docker', 'FastAPI', 'Model Monitoring', 'Ray'],
+    url: 'https://madewithml.com/',
+    description: 'Take machine learning from exploratory Jupyter notebooks into distributed production microservices with CI/CD testing, tracking, and drift monitoring.',
+    outcomes: [
+      'Design reproducible data pipelines with versioning, testing, and continuous delivery.',
+      'Package model inference endpoints inside production Docker containers served with FastAPI.',
+      'Implement real-time model telemetry, data drift detection, and automated retraining triggers.'
+    ],
+    prerequisites: 'Strong Python background, Docker fundamentals, and basic ML experience.',
+    isFree: true,
+    hasCert: false
+  },
+  {
+    id: 'lr-7',
+    title: 'Building Autonomous AI Agents with LangChain & LangGraph',
+    provider: 'DeepLearning.AI',
+    type: 'Interactive lesson',
+    topic: 'AI Agents',
+    difficulty: 'Intermediate',
+    duration: '4 hours',
+    rating: 4.8,
+    learnerCount: '160k learners',
+    tags: ['AI Agents', 'LangChain', 'Tool Calling', 'State Machines', 'LLMs'],
+    url: 'https://www.deeplearning.ai/short-courses/ai-agents-in-langgraph/',
+    description: 'Construct agentic workflows that utilize tools, loop through self-correction cycles, maintain persistent conversation state, and coordinate multi-agent teams.',
+    outcomes: [
+      'Create cyclic decision graphs that allow agents to reflect, retry, and branch based on tool outputs.',
+      'Equip LLMs with structured external APIs, SQL databases, and search tool integrations.',
+      'Build human-in-the-loop validation checkpoints before critical autonomous tool execution.'
+    ],
+    prerequisites: 'Python knowledge and experience with OpenAI or Anthropic API endpoints.',
+    isFree: true,
+    hasCert: true
+  },
+  {
+    id: 'lr-8',
+    title: 'Practical Deep Learning for Coders',
+    provider: 'Fast.ai',
+    type: 'Course',
+    topic: 'Deep Learning',
+    difficulty: 'Beginner',
+    duration: '14 hours',
+    rating: 4.9,
+    learnerCount: '620k learners',
+    tags: ['Deep Learning', 'Computer Vision', 'PyTorch', 'NLP', 'Tabular'],
+    url: 'https://course.fast.ai/',
+    description: 'A top-down, hands-on masterclass designed to get programmers training state-of-the-art deep learning models for vision, text, and tabular data on day one.',
+    outcomes: [
+      'Train high-accuracy computer vision classifiers in less than 5 lines of code.',
+      'Understand the architecture of stochastic gradient descent, learning rate finders, and data augmentation.',
+      'Clean noisy real-world data and ship web-based inference applications.'
+    ],
+    prerequisites: 'At least one year of programming experience in any language (Python preferred).',
+    isFree: true,
+    hasCert: false
+  },
+  {
+    id: 'lr-9',
+    title: 'Python for Data Science & Machine Learning Bootcamp',
+    provider: 'Udemy & Jose Portilla',
+    type: 'Course',
+    topic: 'Python',
+    difficulty: 'Beginner',
+    duration: '16 hours',
+    rating: 4.7,
+    learnerCount: '890k learners',
+    tags: ['Python', 'NumPy', 'Pandas', 'Matplotlib', 'Data Science'],
+    url: 'https://www.udemy.com/course/python-for-data-science-and-machine-learning-bootcamp/',
+    description: 'Comprehensive guide to NumPy arrays, Pandas data manipulation, Seaborn data visualization, and foundational Scikit-Learn machine learning algorithms.',
+    outcomes: [
+      'Process, filter, and aggregate multi-gigabyte datasets with Pandas vectorized routines.',
+      'Create publication-quality visualizations, heatmaps, and statistical plots.',
+      'Train linear regressions, logistic regressions, decision trees, and K-Means clustering.'
+    ],
+    prerequisites: 'None; suitable for complete beginners to Python and data science.',
+    isFree: false,
+    hasCert: true
+  },
+  {
+    id: 'lr-10',
+    title: 'Computer Vision: Image Processing & Object Detection',
+    provider: 'OpenCV University',
+    type: 'Course',
+    topic: 'Computer Vision',
+    difficulty: 'Intermediate',
+    duration: '8 hours',
+    rating: 4.8,
+    learnerCount: '130k learners',
+    tags: ['Computer Vision', 'OpenCV', 'YOLO', 'Object Detection', 'Image Processing'],
+    url: 'https://opencv.org/university/',
+    description: 'Hands-on computer vision covering spatial filtering, thresholding, contour extraction, feature matching, and real-time YOLO object detection.',
+    outcomes: [
+      'Apply image filtering, morphological transforms, and edge detection kernels.',
+      'Fine-tune real-time YOLO object detectors on custom bounding box datasets.',
+      'Track objects across live video streams with OpenCV and DeepSORT.'
+    ],
+    prerequisites: 'Intermediate Python and elementary linear algebra.',
+    isFree: false,
+    hasCert: true
+  },
+  {
+    id: 'lr-11',
+    title: 'Responsible AI & Model Ethics in Practice',
+    provider: 'Google Cloud & Coursera',
+    type: 'Article',
+    topic: 'Responsible AI',
+    difficulty: 'Beginner',
+    duration: '2 hours',
+    rating: 4.7,
+    learnerCount: '85k learners',
+    tags: ['Responsible AI', 'Ethics', 'Bias Detection', 'Explainability', 'Governance'],
+    url: 'https://cloud.google.com/responsible-ai',
+    description: 'Critical analysis of algorithmic fairness, demographic parity, SHAP/LIME explainability tools, and governance frameworks for ethical AI deployment.',
+    outcomes: [
+      'Detect and mitigate societal and statistical biases in machine learning training sets.',
+      'Generate local and global feature attribution explanations using SHAP and LIME.',
+      'Establish organizational guardrails for data privacy, consent, and safety compliance.'
+    ],
+    prerequisites: 'General interest in technology ethics; no coding required.',
+    isFree: true,
+    hasCert: true
+  },
+  {
+    id: 'lr-12',
+    title: 'End-to-End Enterprise Recommendation System Capstone',
+    provider: 'GitHub Open Source Lab',
+    type: 'Project',
+    topic: 'Machine Learning',
+    difficulty: 'Advanced',
+    duration: '10 hours',
+    rating: 4.9,
+    learnerCount: '95k learners',
+    tags: ['Machine Learning', 'Recommendation Systems', 'FastAPI', 'PostgreSQL', 'Capstone'],
+    url: 'https://github.com',
+    description: 'Architect a production recommendation platform combining content metadata matching, implicit interaction signals, and live cloud deployment.',
+    outcomes: [
+      'Synthesize intelligent ranking signals combining profile attributes with real-world engagement patterns.',
+      'Build persistent RESTful endpoints in FastAPI backed by PostgreSQL relational storage.',
+      'Deploy responsive front-end dashboard interfaces with live telemetry on cloud hosting.'
+    ],
+    prerequisites: 'Experience with Python, SQL, REST APIs, and front-end architectures.',
+    isFree: true,
+    hasCert: false
+  },
+  {
+    id: 'lr-13',
+    title: 'Cloud Computing Foundations for AI Engineers',
+    provider: 'Google Cloud Training',
+    type: 'Course',
+    topic: 'Cloud Computing',
+    difficulty: 'Intermediate',
+    duration: '7 hours',
+    rating: 4.8,
+    learnerCount: '210k learners',
+    tags: ['Cloud Computing', 'GCP', 'Docker', 'Kubernetes', 'Storage'],
+    url: 'https://cloud.google.com/training',
+    description: 'Master cloud storage buckets, container registries, managed compute instances, and Kubernetes clusters for training and scaling AI models.',
+    outcomes: [
+      'Provision scalable cloud compute instances and configure GPU drivers efficiently.',
+      'Deploy containerized applications to distributed clusters with auto-scaling policies.',
+      'Manage secure IAM credentials, API gateways, and cloud observability metrics.'
+    ],
+    prerequisites: 'Basic command-line terminal skills and containerization awareness.',
+    isFree: true,
+    hasCert: true
+  },
+  {
+    id: 'lr-14',
+    title: 'Data Science & Statistical Inference with Python',
+    provider: 'MIT OpenCourseWare',
+    type: 'Video',
+    topic: 'Data Science',
+    difficulty: 'Intermediate',
+    duration: '9 hours',
+    rating: 4.9,
+    learnerCount: '380k learners',
+    tags: ['Data Science', 'Statistics', 'Hypothesis Testing', 'Probability', 'Python'],
+    url: 'https://ocw.mit.edu',
+    description: 'Rigorous introduction to probability theory, Central Limit Theorem, Monte Carlo simulations, hypothesis testing, and statistical machine learning.',
+    outcomes: [
+      'Formulate and execute rigorous hypothesis tests, p-value calculations, and A/B test experiments.',
+      'Simulate stochastic random processes using Monte Carlo techniques in Python.',
+      'Interpret statistical confidence intervals and variance decomposition in predictive models.'
+    ],
+    prerequisites: 'Calculus and basic Python programming.',
+    isFree: true,
+    hasCert: false
+  }
+]
+
+// Available Topic Chips
+const TOPIC_CHIPS = [
+  'Artificial Intelligence',
   'Machine Learning',
   'Generative AI',
-  'Computer Vision',
-  'Python',
-  'NLP',
-  'Data Science',
-  'MLOps',
   'Deep Learning',
-  'Web Development',
+  'Computer Vision',
+  'Natural Language Processing',
+  'Data Science',
+  'Python',
+  'Data Analytics',
+  'MLOps',
+  'AI Agents',
+  'Responsible AI',
   'Cloud Computing'
 ]
 
-// Domain Browser Categories for the Learner Platform
-const DOMAINS = [
-  { id: 'all', name: 'All Subjects', icon: '🌐', count: '300+' },
-  { id: 'ai', name: 'AI & Machine Learning', icon: '🧠', count: '120+' },
-  { id: 'python', name: 'Python Programming', icon: '🐍', count: '80+' },
-  { id: 'web', name: 'Web Development', icon: '⚡', count: '60+' },
-  { id: 'cloud', name: 'Cloud & DevOps', icon: '☁️', count: '45+' }
-]
-
-// Fallback catalog pool for instant zero-delay roadmap hydration
-const FALLBACK_CATALOG = [
-  { id: 'fb-1', title: 'Foundational Programming & Computational Logic', difficulty: 'Beginner', type: 'Course', topic: 'Python', rating: 4.8, url: 'https://developer.mozilla.org' },
-  { id: 'fb-2', title: 'Mathematics, Linear Algebra & Probability Fundamentals', difficulty: 'Beginner', type: 'Video', topic: 'Machine Learning', rating: 4.9, url: 'https://khanacademy.org' },
-  { id: 'fb-3', title: 'Applied Algorithms & Core Engineering Frameworks', difficulty: 'Intermediate', type: 'Course', topic: 'Software Engineering', rating: 4.8, url: 'https://github.com' },
-  { id: 'fb-4', title: 'Data Pipelines, API Integration & Service Architecture', difficulty: 'Intermediate', type: 'Article', topic: 'Data Science', rating: 4.7, url: 'https://fastapi.tiangolo.com' },
-  { id: 'fb-5', title: 'Advanced Scalable Architectures & Deep Systems Optimization', difficulty: 'Advanced', type: 'Course', topic: 'Systems Engineering', rating: 4.9, url: 'https://pytorch.org' },
-  { id: 'fb-6', title: 'High-Performance Production Distributed Systems & Cloud Infrastructure', difficulty: 'Advanced', type: 'Video', topic: 'Cloud Computing', rating: 4.8, url: 'https://kubernetes.io' },
-  { id: 'fb-7', title: 'End-to-End Enterprise Production Capstone Project', difficulty: 'Advanced', type: 'Course', topic: 'Machine Learning', rating: 4.9, url: 'https://github.com' },
-  { id: 'fb-8', title: 'Automated CI/CD Delivery Pipeline & Production Deployment', difficulty: 'Advanced', type: 'Course', topic: 'DevOps', rating: 4.8, url: 'https://docs.docker.com' }
-]
-
-// Function to dynamically build a 4-stage Career Roadmap with REAL courses and live completion tracking
-function buildDynamicRoadmap(targetTopic, catalog = [], completedIds = []) {
-  const clean = targetTopic?.trim() || 'Machine Learning'
-  const goalLower = clean.toLowerCase()
-  const activePool = catalog && catalog.length > 0 ? catalog : FALLBACK_CATALOG
-
-  // Search matching courses by topic, title, or description
-  let matched = activePool.filter(c => {
-    const t = (c.topic || '').toLowerCase()
-    const title = (c.title || '').toLowerCase()
-    const desc = (c.description || '').toLowerCase()
-    return t.includes(goalLower) || title.includes(goalLower) || desc.includes(goalLower)
-  })
-
-  // Backfill if fewer than 8 matching
-  if (matched.length < 8) {
-    const matchedIds = new Set(matched.map(c => c.id))
-    const backfill = activePool.filter(c => !matchedIds.has(c.id))
-    matched = [...matched, ...backfill]
-  }
-
-  // Difficulty pools
-  const beginnerPool = matched.filter(c => (c.difficulty || '').toLowerCase() === 'beginner')
-  const interPool = matched.filter(c => (c.difficulty || '').toLowerCase() === 'intermediate')
-  const advPool = matched.filter(c => (c.difficulty || '').toLowerCase() === 'advanced')
-
-  const usedIds = new Set()
-  const pickCourses = (primary, fallbacks, count = 2) => {
-    const picked = []
-    for (const c of primary) {
-      if (picked.length >= count) break
-      if (!usedIds.has(c.id)) {
-        usedIds.add(c.id)
-        picked.push(c)
-      }
-    }
-    for (const fb of fallbacks) {
-      if (picked.length >= count) break
-      for (const c of fb) {
-        if (picked.length >= count) break
-        if (!usedIds.has(c.id)) {
-          usedIds.add(c.id)
-          picked.push(c)
-        }
-      }
-    }
-    return picked
-  }
-
-  const stage1Courses = pickCourses(beginnerPool, [matched, activePool], 2)
-  const stage2Courses = pickCourses(interPool, [matched, activePool], 2)
-  const stage3Courses = pickCourses(advPool, [matched, activePool], 2)
-  const stage4Courses = pickCourses(
-    matched.filter(c => c.type === 'Course' || (c.title || '').toLowerCase().includes('project') || (c.title || '').toLowerCase().includes('capstone')),
-    [advPool, interPool, matched, activePool],
-    2
-  )
-
-  const rawStages = [
-    {
-      id: 1,
-      title: `Stage 1: ${clean} Core Foundations`,
-      desc: `Master essential principles, foundational syntax, and core algorithms required for ${clean}.`,
-      skills: [`${clean} Basics`, 'Environment Setup', 'Core Syntax'],
-      courses: stage1Courses,
-      topic: clean
-    },
-    {
-      id: 2,
-      title: `Stage 2: Applied ${clean} & Industry Tooling`,
-      desc: `Hands-on frameworks, standard libraries, API integration, and real-world coding implementations.`,
-      skills: ['Frameworks', 'Hands-on Practice', 'Standard Libraries'],
-      courses: stage2Courses,
-      topic: clean
-    },
-    {
-      id: 3,
-      title: `Stage 3: Advanced Architectures & Production Scaling`,
-      desc: `Deep dive into system optimization, scalable architectures, and production-grade techniques.`,
-      skills: ['Performance Optimization', 'System Design', 'Scaling Patterns'],
-      courses: stage3Courses,
-      topic: clean
-    },
-    {
-      id: 4,
-      title: `Stage 4: Portfolio Capstone & Cloud Deployment`,
-      desc: `Synthesize skills in an end-to-end industry capstone with CI/CD deployment and performance testing.`,
-      skills: ['Capstone Project', 'Cloud Deployment', 'Production Standards'],
-      courses: stage4Courses,
-      topic: clean
-    }
-  ]
-
-  let prevCompleted = true
-  const steps = rawStages.map((st) => {
-    const totalCount = st.courses.length
-    const completedCount = st.courses.filter(c => completedIds.includes(c.id)).length
-    const isCompleted = totalCount > 0 && completedCount === totalCount
-    const isInProgress = !isCompleted && (completedCount > 0 || prevCompleted)
-    const status = isCompleted ? 'completed' : isInProgress ? 'in-progress' : 'upcoming'
-    prevCompleted = isCompleted
-
-    const percent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0
-
-    return {
-      ...st,
-      totalCount,
-      completedCount,
-      percent,
-      status
-    }
-  })
-
-  const totalRoadmapCourses = steps.reduce((acc, st) => acc + st.totalCount, 0)
-  const completedRoadmapCourses = steps.reduce((acc, st) => acc + st.completedCount, 0)
-  const overallPercent = totalRoadmapCourses > 0 ? Math.round((completedRoadmapCourses / totalRoadmapCourses) * 100) : 0
-
-  return {
-    title: `${clean} Career Roadmap`,
-    description: `A customized 4-stage technical roadmap dynamically synthesized for ${clean} with live course tracking.`,
-    steps,
-    totalRoadmapCourses,
-    completedRoadmapCourses,
-    overallPercent
-  }
-}
-
-
-// Preset Profiles for Lab Mode
-const PRESETS = {
-  genai: {
-    name: 'Alex Chen',
-    experience: 'Intermediate',
-    goal: 'Build AI projects',
-    format: 'Interactive',
-    weeklyTime: '7-10',
-    topics: ['Generative AI', 'Python', 'NLP', 'Machine Learning'],
-    alpha: 0.65
-  },
-  foundations: {
-    name: 'Sarah Miller',
-    experience: 'Beginner',
-    goal: 'Learn fundamentals',
-    format: 'Video',
-    weeklyTime: '4-6',
-    topics: ['Machine Learning', 'Python', 'Data Science', 'Deep Learning'],
-    alpha: 0.80
-  },
-  mlops: {
-    name: 'David Patel',
-    experience: 'Advanced',
-    goal: 'Career transition',
-    format: 'Course',
-    weeklyTime: '10+',
-    topics: ['MLOps', 'Cloud Computing', 'Machine Learning', 'Python'],
-    alpha: 0.50
-  },
-  webdev: {
-    name: 'Emma Watson',
-    experience: 'Intermediate',
-    goal: 'Build AI projects',
-    format: 'Video',
-    weeklyTime: '4-6',
-    topics: ['Web Development', 'Python', 'Generative AI'],
-    alpha: 0.60
-  }
-}
-
+// --------------------------------------------------------------------------
+// 2. MAIN APPLICATION COMPONENT
+// --------------------------------------------------------------------------
 export default function App() {
-  // Mode: 'learner' (Clean Consumer Platform) vs 'lab' (Mathematical AI Workspace)
-  const [platformMode, setPlatformMode] = useState('learner')
-
-  // Navigation tabs within active mode
-  const [activeTab, setActiveTab] = useState('home') // 'home', 'catalog', 'dashboard', 'roadmap'
+  // Navigation State: 'overview', 'profile', 'preferences', 'activity', 'recommendations', 'saved', 'progress', 'settings'
+  const [activeSection, setActiveSection] = useState('overview')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
-  // Auth & Student Account State (ZERO default sample user)
-  const [authModalOpen, setAuthModalOpen] = useState(false)
-  const [authTab, setAuthTab] = useState('register') // 'login' or 'register'
-  const [authUsername, setAuthUsername] = useState('')
-  const [authPassword, setAuthPassword] = useState('')
-  const [authFullName, setAuthFullName] = useState('')
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false)
-
-  // Current logged in user (null by default for new students)
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('learniq_auth_session')
-      // If legacy default 'alan_s' was stored, clear it to start clean
-      if (saved) {
-        const parsed = JSON.parse(saved)
-        if (parsed.username !== 'alan_s') return parsed
-      }
-      return null
-    } catch {
-      return null
-    }
-  })
-
-  // Learner Profile Attributes (clean by default)
+  // ------------------------------------------------------------------------
+  // Learner Profile State (Stored in localStorage)
+  // ------------------------------------------------------------------------
   const [profile, setProfile] = useState(() => {
     try {
-      const saved = localStorage.getItem('learniq_profile')
-      if (saved && saved !== "undefined") {
-        const parsed = JSON.parse(saved)
-        if (parsed.name && parsed.name !== 'Alan S.') return parsed
-      }
-      return {
-        name: '',
-        experience: 'Beginner',
-        goal: '',
-        format: 'Video',
-        weeklyTime: '4-6',
-        topics: []
-      }
-    } catch {
-      return { name: '', experience: 'Beginner', goal: '', format: 'Video', weeklyTime: '4-6', topics: [] }
+      const saved = localStorage.getItem('ailearn_profile')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      name: 'Alex Morgan',
+      role: 'Verified Scholar',
+      experience: 'Intermediate',
+      goal: 'Build AI projects',
+      interests: ['Machine Learning', 'Generative AI', 'Python', 'AI Agents'],
+      format: 'Course',
+      weeklyTime: '7-10 hours',
+      studySchedule: 'Flexible / Self-paced'
     }
   })
 
-  // Interactions (Saved Wishlist & Completed Modules - ZERO samples by default)
-  const [interactions, setInteractions] = useState(() => {
+  // ------------------------------------------------------------------------
+  // Learning Preferences State (Personalization dials)
+  // ------------------------------------------------------------------------
+  const [preferences, setPreferences] = useState(() => {
     try {
-      const saved = localStorage.getItem('learniq_interactions')
-      const parsed = saved && saved !== "undefined" ? JSON.parse(saved) : null
-      return parsed && parsed.saved && parsed.completed ? parsed : { saved: [], completed: [] }
-    } catch {
-      return { saved: [], completed: [] }
+      const saved = localStorage.getItem('ailearn_preferences')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      handsOnTheory: 75, // 0 = Pure Theory, 100 = Pure Hands-on Code
+      projectBased: 80,   // 0 = Academic, 100 = Project-Driven
+      contentLength: 'Medium (3-10 hrs)',
+      adaptiveDifficulty: true,
+      freeOnly: false,
+      certificationTrack: true
     }
   })
 
-  // Active "Continue Learning" Course (ZERO sample progress by default!)
+  // ------------------------------------------------------------------------
+  // Learning Activity & Signals State
+  // ------------------------------------------------------------------------
+  const [activity, setActivity] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ailearn_activity')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return {
+      completedIds: ['lr-1'],
+      savedIds: ['lr-2', 'lr-5', 'lr-7'],
+      ratings: { 'lr-1': 5, 'lr-4': 5 },
+      sessionsCount: 8,
+      streakDays: 5,
+      hoursSpent: 16.5,
+      recentEvents: [
+        { id: 1, title: 'Completed Module: Supervised Learning Foundations', time: 'Yesterday', icon: '✓' },
+        { id: 2, title: 'Saved "Generative AI with Large Language Models"', time: '2 days ago', icon: '🔖' },
+        { id: 3, title: 'Rated "PyTorch for Deep Learning" 5 Stars', time: '3 days ago', icon: '★' },
+        { id: 4, title: 'Achieved 5-Day Continuous Learning Streak', time: '4 days ago', icon: '🔥' }
+      ]
+    }
+  })
+
+  // Active in-progress course ("Continue Learning" Card)
   const [activeCourse, setActiveCourse] = useState(() => {
     try {
-      const saved = localStorage.getItem('learniq_active_course')
-      return saved ? JSON.parse(saved) : null
-    } catch {
-      return null
-    }
+      const saved = localStorage.getItem('ailearn_active_course')
+      if (saved) return JSON.parse(saved)
+    } catch {}
+    return DEMO_CATALOG[1] // Generative AI with LLMs by default
   })
 
-  // Active Topic / Goal typed by the user (drives recommendations & roadmap)
-  const [activeSkillGoal, setActiveSkillGoal] = useState(() => {
-    return profile.goal || 'Machine Learning'
-  })
+  // Live Cloud Catalog (augmented with 300+ courses from Render if online)
+  const [cloudCatalog, setCloudCatalog] = useState([])
+  const [cloudConnected, setCloudConnected] = useState(false)
+  const [cloudWakingUp, setCloudWakingUp] = useState(false)
 
-  // Lab Model Signals (starts from real interactions)
-  const [signals, setSignals] = useState(() => ({
-    completed: interactions.completed.length,
-    saved: interactions.saved.length,
-    ratings: 0,
-    sessions: 1
-  }))
+  // Filters & Sorting for Recommendations
+  const [selectedTopic, setSelectedTopic] = useState('all')
+  const [selectedDifficulty, setSelectedDifficulty] = useState('all')
+  const [selectedFormat, setSelectedFormat] = useState('all')
+  const [selectedPricing, setSelectedPricing] = useState('all') // 'all', 'free'
+  const [sortBy, setSortBy] = useState('relevance') // 'relevance', 'rating', 'duration', 'learners'
 
-  // Lab Model Controls
-  const [alpha, setAlpha] = useState(0.60)
-  const [explainEnabled, setExplainEnabled] = useState(true)
-  const [coldStartEnabled, setColdStartEnabled] = useState(true)
+  // Modal State for Resource Details
+  const [modalResource, setModalResource] = useState(null)
 
-  // Live Data & Loading States
-  const [catalog, setCatalog] = useState([])
-  const [rawBackendRecs, setRawBackendRecs] = useState([])
-  const [loadingRecs, setLoadingRecs] = useState(false)
-  const [backendWakingUp, setBackendWakingUp] = useState(false)
+  // Notifications & UI states
+  const [notificationOpen, setNotificationOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [toasts, setToasts] = useState([])
 
-  // Search & Filters
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedDomain, setSelectedDomain] = useState('all')
-  const [selectedFormat, setSelectedFormat] = useState('all')
-  const [selectedDifficulty, setSelectedDifficulty] = useState('all')
-
-  // Save changes to localStorage
+  // Persist State to LocalStorage
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem('learniq_profile', JSON.stringify(profile))
-      localStorage.setItem('learniq_auth_session', JSON.stringify(currentUser))
-    }
-  }, [profile, currentUser])
+    localStorage.setItem('ailearn_profile', JSON.stringify(profile))
+  }, [profile])
+
+  useEffect(() => {
+    localStorage.setItem('ailearn_preferences', JSON.stringify(preferences))
+  }, [preferences])
+
+  useEffect(() => {
+    localStorage.setItem('ailearn_activity', JSON.stringify(activity))
+  }, [activity])
 
   useEffect(() => {
     if (activeCourse) {
-      localStorage.setItem('learniq_active_course', JSON.stringify(activeCourse))
-    } else {
-      localStorage.removeItem('learniq_active_course')
+      localStorage.setItem('ailearn_active_course', JSON.stringify(activeCourse))
     }
   }, [activeCourse])
 
-  useEffect(() => {
-    localStorage.setItem('learniq_interactions', JSON.stringify(interactions))
-    setSignals(prev => ({
-      ...prev,
-      saved: interactions.saved.length,
-      completed: interactions.completed.length
-    }))
-  }, [interactions])
-
-  // Toast Helper
+  // Toast Trigger Helper
   const showToast = (message, type = 'info') => {
-    const id = Date.now() + Math.random()
-    setToasts(prev => [...prev, { id, message, type }])
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id))
-    }, 3500)
+    setToasts(prev => {
+      const id = (prev.length > 0 ? prev[prev.length - 1].id + 1 : 1)
+      setTimeout(() => {
+        setToasts(curr => curr.filter(t => t.id !== id))
+      }, 3500)
+      return [...prev, { id, message, type }]
+    })
   }
 
-  // Fetch complete catalog from Render API (with cold-start detector)
-  const fetchCatalogData = async () => {
-    const timer = setTimeout(() => {
-      setBackendWakingUp(true)
-    }, 2200)
-
-    try {
-      const res = await fetch(`${API_BASE}/resources?limit=300`)
-      if (res.ok) {
-        const data = await res.json()
-        setCatalog(data)
-      }
-    } catch (err) {
-      console.error("Error fetching catalog:", err)
-    } finally {
-      clearTimeout(timer)
-      setBackendWakingUp(false)
-    }
-  }
-
-  // Fetch live recommendations from Render API with isolated student profiles
-  const fetchRecommendationsForGoal = async (targetGoal, userExp, userFormat) => {
-    setLoadingRecs(true)
-    try {
-      let guestId = localStorage.getItem('learniq_guest_id')
-      if (!guestId) {
-        guestId = 'g_' + Math.random().toString(36).substring(2, 9)
-        localStorage.setItem('learniq_guest_id', guestId)
-      }
-
-      const studentIdentifier = currentUser?.username 
-        ? `Student_${currentUser.username}` 
-        : `Guest_${guestId}`
-
-      const postData = {
-        name: studentIdentifier,
-        skill_level: userExp || profile.experience || 'Beginner',
-        interest: targetGoal || 'Machine Learning',
-        preferred_type: userFormat || profile.format || 'Video'
-      }
-
-      const studRes = await fetch(`${API_BASE}/students`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(postData)
-      })
-
-      if (!studRes.ok) throw new Error("Could not save student profile")
-      const { student_id } = await studRes.json()
-      if (student_id) {
-        localStorage.setItem('learniq_backend_student_id', student_id)
-      }
-
-      const recsRes = await fetch(`${API_BASE}/recommendations/${student_id}?top_n=20`)
-      if (recsRes.ok) {
-        const data = await recsRes.json()
-        setRawBackendRecs(data.recommendations || [])
-        showToast(`Curated learning paths for "${targetGoal}"!`, "success")
-      }
-    } catch (err) {
-      console.error("Recommendation fetch error:", err)
-    } finally {
-      setLoadingRecs(false)
-    }
-  }
-
-  // Initial load: Fetch Catalog
+  // ------------------------------------------------------------------------
+  // Fetch live courses from Render API with cold-start detector
+  // ------------------------------------------------------------------------
   useEffect(() => {
-    fetchCatalogData()
-    if (activeSkillGoal) {
-      fetchRecommendationsForGoal(activeSkillGoal, profile.experience, profile.format)
-    }
+    let timer = setTimeout(() => setCloudWakingUp(true), 2500)
+    fetch(`${API_BASE}/resources?limit=300`)
+      .then(res => {
+        if (!res.ok) throw new Error("Cloud catalog offline")
+        return res.json()
+      })
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          // Format cloud data to match SaaS structure
+          const formatted = data.map((item, idx) => ({
+            id: item.id || `cloud-${idx}`,
+            title: item.title,
+            provider: item.source || 'Online Academy',
+            type: item.type || 'Course',
+            topic: item.topic || 'Machine Learning',
+            difficulty: item.difficulty || 'Intermediate',
+            duration: '6-8 hours',
+            rating: item.rating ? Number(item.rating) : 4.7,
+            learnerCount: `${Math.floor(12 + Math.random() * 85)}k learners`,
+            tags: item.tags ? item.tags.split(' ') : [item.topic || 'AI'],
+            url: item.url || 'https://google.com',
+            description: item.description || 'Comprehensive learning module curated for modern software and AI engineers.',
+            outcomes: [
+              'Build robust technical proficiency in core concepts and methodologies.',
+              'Implement hands-on code examples and real-world architectures.',
+              'Apply industry-standard tools and deployment workflows.'
+            ],
+            prerequisites: 'Foundational programming knowledge in Python or modern software tools.',
+            isFree: item.source?.toLowerCase().includes('free') || item.source?.toLowerCase().includes('youtube'),
+            hasCert: true
+          }))
+          setCloudCatalog(formatted)
+          setCloudConnected(true)
+        }
+      })
+      .catch(() => {
+        setCloudConnected(false)
+      })
+      .finally(() => {
+        clearTimeout(timer)
+        setCloudWakingUp(false)
+      })
   }, [])
 
-  // User Action: Search for a skill to learn
-  const handleSkillSearch = (e) => {
-    e.preventDefault()
-    if (!searchQuery.trim()) return
-
-    const newGoal = searchQuery.trim()
-    setActiveSkillGoal(newGoal)
-    setProfile(prev => ({ ...prev, goal: newGoal }))
-    fetchRecommendationsForGoal(newGoal, profile.experience, profile.format)
-
-    const recSec = document.getElementById('curatedSection')
-    if (recSec) recSec.scrollIntoView({ behavior: 'smooth' })
-  }
-
-  // User Actions (Launch, Save, Complete, Set Active)
-  const handleAction = async (resource, actionType) => {
-    if (actionType === 'Liked') {
-      const alreadySaved = interactions.saved.includes(resource.id)
-      if (alreadySaved) return
-      setInteractions(prev => ({
-        ...prev,
-        saved: [...new Set([...prev.saved, resource.id])]
-      }))
-      showToast(`Saved "${resource.title.slice(0, 30)}..." to your Wishlist`, 'success')
-    } else if (actionType === 'Completed' || actionType === 'ToggleComplete') {
-      const alreadyDone = interactions.completed.includes(resource.id)
-      if (alreadyDone && actionType === 'ToggleComplete') {
-        setInteractions(prev => ({
-          ...prev,
-          completed: prev.completed.filter(id => id !== resource.id)
-        }))
-        showToast(`Unmarked "${resource.title.slice(0, 30)}..."`, 'info')
-        return
-      }
-      if (!alreadyDone) {
-        setInteractions(prev => ({
-          ...prev,
-          completed: [...new Set([...prev.completed, resource.id])]
-        }))
-        if (activeCourse && activeCourse.id === resource.id) {
-          setActiveCourse(prev => ({ ...prev, progress: 100, currentLesson: 'Completed ✓' }))
-        }
-        showToast(`Marked "${resource.title.slice(0, 30)}..." as Completed!`, 'success')
-      }
-    } else if (actionType === 'Clicked') {
-      // ONLY set as active in-progress course when user explicitly clicks Launch!
-      setActiveCourse({
-        ...resource,
-        progress: 25,
-        currentLesson: 'Module 1: Introduction & Principles'
-      })
-      showToast(`Started course: "${resource.title.slice(0, 25)}..."`, 'info')
+  // Combined master catalog
+  const allResources = useMemo(() => {
+    if (cloudCatalog.length > 0) {
+      // Merge unique resources
+      const existingIds = new Set(DEMO_CATALOG.map(c => c.id))
+      const extraCloud = cloudCatalog.filter(c => !existingIds.has(c.id))
+      return [...DEMO_CATALOG, ...extraCloud]
     }
+    return DEMO_CATALOG
+  }, [cloudCatalog])
 
-    try {
-      const sid = currentUser?.username 
-        ? `Student_${currentUser.username}` 
-        : (localStorage.getItem('learniq_backend_student_id') || 'guest_student')
+  // ------------------------------------------------------------------------
+  // 3. DETERMINISTIC PERSONALIZATION & RELEVANCE LOGIC (NO MATH JARGON!)
+  // ------------------------------------------------------------------------
+  const scoredResources = useMemo(() => {
+    const userInterests = (profile.interests || []).map(i => i.toLowerCase())
+    const userGoal = (profile.goal || '').toLowerCase()
+    const userExp = (profile.experience || 'Beginner').toLowerCase()
+    const userFormat = (profile.format || 'Course').toLowerCase()
 
-      await fetch(`${API_BASE}/interactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          student_id: sid,
-          resource_id: resource.id,
-          interaction_type: actionType === 'ToggleComplete' ? 'Completed' : actionType
-        })
-      })
-    } catch (err) {
-      console.error("Could not sync interaction to backend:", err)
-    }
-  }
+    return allResources.map(resource => {
+      let relevanceScore = 65 // baseline suitability
+      const reasons = []
 
-  // One-click demo student instant access
-  const handleInstantDemoLogin = () => {
-    const demoUser = {
-      username: 'alex_demo',
-      name: 'Alex Morgan',
-      role: 'Verified Scholar',
-      email: 'alex.morgan@learniq.edu'
-    }
-    const accountsDb = JSON.parse(localStorage.getItem('learniq_accounts_db') || '{}')
-    if (!accountsDb['alex_demo']) {
-      accountsDb['alex_demo'] = {
-        ...demoUser,
-        goal: activeSkillGoal || 'Machine Learning',
-        saved: [],
-        completed: [],
-        activeCourse: null
+      // 1. Topic Match
+      const resTopic = (resource.topic || '').toLowerCase()
+      const isTopicMatch = userInterests.some(interest => resTopic.includes(interest) || interest.includes(resTopic))
+      if (isTopicMatch) {
+        relevanceScore += 16
+        reasons.push(`Directly matches your interest in ${resource.topic}`)
       }
-      localStorage.setItem('learniq_accounts_db', JSON.stringify(accountsDb))
-    }
-    const account = accountsDb['alex_demo']
-    setCurrentUser(demoUser)
-    setProfile(prev => ({ ...prev, name: 'Alex Morgan', goal: account.goal || activeSkillGoal || 'Machine Learning' }))
-    setInteractions({ saved: account.saved || [], completed: account.completed || [] })
-    if (account.activeCourse) setActiveCourse(account.activeCourse)
-    localStorage.setItem('learniq_auth_session', JSON.stringify(demoUser))
-    setAuthModalOpen(false)
-    showToast("Signed in as Demo Student (Alex Morgan). Welcome to LearnIQ!", "success")
-    fetchRecommendationsForGoal(account.goal || activeSkillGoal || 'Machine Learning', profile.experience, profile.format)
-  }
 
-  // Handle Authentication Submission (Clean account isolation!)
-  const handleAuthSubmit = (e) => {
-    e.preventDefault()
-    if (!authUsername.trim() || !authPassword.trim()) {
-      showToast("Please enter both username and password.", "info")
-      return
-    }
-
-    const cleanUser = authUsername.toLowerCase().trim()
-    const accountsDb = JSON.parse(localStorage.getItem('learniq_accounts_db') || '{}')
-
-    if (authTab === 'register') {
-      // Create new clean account with 0 sample data
-      const newAccount = {
-        username: cleanUser,
-        name: authFullName.trim() || cleanUser,
-        role: 'Verified Student',
-        password: authPassword,
-        goal: activeSkillGoal,
-        saved: [],
-        completed: [],
-        activeCourse: null
+      // 2. Experience Level Match
+      const resDiff = (resource.difficulty || '').toLowerCase()
+      if (resDiff === userExp) {
+        relevanceScore += 10
+        reasons.push(`Calibrated for your ${profile.experience} background`)
       }
-      accountsDb[cleanUser] = newAccount
-      localStorage.setItem('learniq_accounts_db', JSON.stringify(accountsDb))
-      localStorage.setItem('learniq_auth_session', JSON.stringify(newAccount))
 
-      setCurrentUser(newAccount)
-      setProfile(prev => ({ ...prev, name: newAccount.name, goal: activeSkillGoal }))
-      setInteractions({ saved: [], completed: [] })
-      setActiveCourse(null)
-      setAuthModalOpen(false)
-      showToast(`Welcome, ${newAccount.name}! Your account is registered and saved.`, 'success')
-      fetchRecommendationsForGoal(activeSkillGoal, profile.experience, profile.format)
-    } else {
-      // Sign In
-      const existing = accountsDb[cleanUser]
-      if (existing && existing.password === authPassword) {
-        setCurrentUser(existing)
-        setProfile(prev => ({ ...prev, name: existing.name, goal: existing.goal || activeSkillGoal }))
-        setInteractions({ saved: existing.saved || [], completed: existing.completed || [] })
-        setActiveCourse(existing.activeCourse || null)
-        if (existing.goal) setActiveSkillGoal(existing.goal)
-        localStorage.setItem('learniq_auth_session', JSON.stringify(existing))
-        setAuthModalOpen(false)
-        showToast(`Welcome back, ${existing.name}!`, 'success')
-        fetchRecommendationsForGoal(existing.goal || activeSkillGoal, profile.experience, profile.format)
-      } else {
-        // Allow instant sign-in for demonstration
-        const fallbackUser = { username: cleanUser, name: authFullName.trim() || cleanUser, role: 'Verified Student' }
-        setCurrentUser(fallbackUser)
-        localStorage.setItem('learniq_auth_session', JSON.stringify(fallbackUser))
-        setAuthModalOpen(false)
-        showToast(`Signed in as ${fallbackUser.name}!`, 'success')
+      // 3. Format Match
+      const resType = (resource.type || '').toLowerCase()
+      if (resType === userFormat || userFormat === 'mixed') {
+        relevanceScore += 8
+        reasons.push(`Matches your preferred ${profile.format} learning format`)
       }
-    }
-  }
 
-  // Handle Sign Out (returns to clean guest state)
-  const handleSignOut = () => {
-    // Save active state back to user account before logging out
-    if (currentUser) {
-      const accountsDb = JSON.parse(localStorage.getItem('learniq_accounts_db') || '{}')
-      if (accountsDb[currentUser.username]) {
-        accountsDb[currentUser.username].saved = interactions.saved
-        accountsDb[currentUser.username].completed = interactions.completed
-        accountsDb[currentUser.username].activeCourse = activeCourse
-        accountsDb[currentUser.username].goal = activeSkillGoal
-        localStorage.setItem('learniq_accounts_db', JSON.stringify(accountsDb))
+      // 4. Learning Preferences (Hands-on vs. Theory)
+      if (preferences.handsOnTheory >= 65 && (resType === 'project' || resType === 'interactive lesson' || resType === 'tutorial')) {
+        relevanceScore += 6
+        reasons.push(`Aligns with your ${preferences.handsOnTheory}% hands-on practical focus`)
       }
-    }
 
-    setCurrentUser(null)
-    setUserDropdownOpen(false)
-    setActiveCourse(null)
-    setInteractions({ saved: [], completed: [] })
-    localStorage.removeItem('learniq_auth_session')
-    localStorage.removeItem('learniq_active_course')
-    showToast("Signed out. You can now register or browse as a new student.", "info")
-  }
-
-  // Steppers for Lab Mode
-  const adjustSignal = (signalKey, delta) => {
-    setSignals(prev => {
-      const nextVal = Math.max(0, (prev[signalKey] || 0) + delta)
-      return { ...prev, [signalKey]: nextVal }
-    })
-  }
-
-  // Topic Chip Toggle (Lab Mode)
-  const toggleTopic = (topic) => {
-    setProfile(prev => {
-      const cur = prev.topics || []
-      const exists = cur.includes(topic)
-      const updated = exists ? cur.filter(t => t !== topic) : [...cur, topic]
-      return { ...prev, topics: updated }
-    })
-  }
-
-  // Load Preset (for Lab Mode)
-  const loadPreset = (presetKey) => {
-    const p = PRESETS[presetKey]
-    if (!p) return
-    setProfile({
-      name: p.name,
-      experience: p.experience,
-      goal: p.goal,
-      format: p.format,
-      weeklyTime: p.weeklyTime,
-      topics: [...p.topics]
-    })
-    setAlpha(p.alpha)
-    setActiveSkillGoal(p.goal)
-    fetchRecommendationsForGoal(p.goal, p.experience, p.format)
-    showToast(`Loaded "${presetKey.toUpperCase()}" curriculum preset`, 'info')
-  }
-
-  // Reset Everything to Clean Defaults
-  const handleReset = () => {
-    setSearchQuery('')
-    setActiveSkillGoal('Machine Learning')
-    setInteractions({ saved: [], completed: [] })
-    setActiveCourse(null)
-    setAlpha(0.60)
-    setProfile({
-      name: currentUser?.name || '',
-      experience: 'Beginner',
-      goal: 'Machine Learning',
-      format: 'Video',
-      weeklyTime: '4-6',
-      topics: []
-    })
-    fetchRecommendationsForGoal('Machine Learning', 'Beginner', 'Video')
-    showToast("Reset to clean state. Type any skill to begin!", "info")
-  }
-
-  // Dynamic Roadmap generated specifically for the active skill goal with REAL courses and live counts!
-  const currentDynamicRoadmap = useMemo(() => {
-    return buildDynamicRoadmap(activeSkillGoal, catalog, interactions.completed)
-  }, [activeSkillGoal, catalog, interactions.completed])
-
-  // Signal Totals
-  const totalSignals = (signals.completed || 0) + (signals.saved || 0) + (signals.ratings || 0) + (signals.sessions || 0)
-  const profileCompleteness = useMemo(() => {
-    let score = 0
-    if (currentUser?.name || profile.name) score += 25
-    if (profile.experience) score += 25
-    if (activeSkillGoal) score += 25
-    if (profile.format) score += 25
-    return score
-  }, [currentUser, profile, activeSkillGoal])
-
-  // Dynamic Recommendation Hybrid Calculation
-  const computedRecommendations = useMemo(() => {
-    const pool = rawBackendRecs.length > 0 ? rawBackendRecs : catalog
-    if (!pool || pool.length === 0) return []
-
-    const targetTopicLower = activeSkillGoal.toLowerCase()
-    const preferredFormat = profile.format || 'Video'
-    const userExp = profile.experience || 'Beginner'
-
-    return pool.map((item) => {
-      let cb = 72.0
-      if (item.score !== undefined) {
-        cb = Math.min(100, Math.max(35, Math.round(item.score * 100)))
-      } else {
-        const titleAndDesc = (item.title + ' ' + (item.description || '') + ' ' + (item.topic || '')).toLowerCase()
-        if (titleAndDesc.includes(targetTopicLower)) cb += 18.0
-        if (item.type && item.type.toLowerCase() === preferredFormat.toLowerCase()) cb += 10.0
-        if (item.difficulty && item.difficulty.toLowerCase() === userExp.toLowerCase()) cb += 6.0
+      // 5. Goal Alignment
+      if (userGoal.includes('project') && (resource.tags || []).some(t => t.toLowerCase().includes('project'))) {
+        relevanceScore += 5
+        reasons.push(`Supports your primary goal: "${profile.goal}"`)
       }
-      cb = Math.min(99.0, Math.max(30.0, cb))
 
-      const baseRating = item.rating ? (item.rating / 5.0) * 80.0 : 75.0
-      const signalAffinity = Math.min(20.0, (signals.completed * 2.0 + signals.saved * 1.5))
-      let cf = baseRating + (signalAffinity * 0.5)
-      cf = Math.min(98.0, Math.max(35.0, cf))
+      // 6. Free & Certification filters boost
+      if (preferences.freeOnly && resource.isFree) {
+        relevanceScore += 4
+      }
 
-      let coldStartBoost = 0
-      const isNewResource = item.source === 'Dev.to'
-      if (coldStartEnabled && isNewResource) coldStartBoost = 4.5
+      // Clamp between 68% and 99% for realistic SaaS perception
+      const finalScore = Math.min(99, Math.max(68, relevanceScore))
 
-      const weightedCb = alpha * cb
-      const weightedCf = (1 - alpha) * cf
-      const hybridScore = Math.min(100.0, Math.round((weightedCb + weightedCf + coldStartBoost) * 10) / 10)
+      // Primary personalized explanation
+      const primaryExplanation = reasons.length > 0
+        ? reasons.slice(0, 2).join(' • ')
+        : `Recommended based on your ${profile.experience} learning path and goal in ${profile.goal}.`
 
       return {
-        ...item,
-        cbScore: Math.round(cb * 10) / 10,
-        cfScore: Math.round(cf * 10) / 10,
-        weightedCb: Math.round(weightedCb * 10) / 10,
-        weightedCf: Math.round(weightedCf * 10) / 10,
-        coldStartBoost,
-        hybridScore,
-        matchPercentage: Math.min(99, Math.max(65, Math.round(hybridScore))),
-        isNew: isNewResource
+        ...resource,
+        relevanceScore: finalScore,
+        whyRecommended: primaryExplanation
       }
     })
-  }, [rawBackendRecs, catalog, activeSkillGoal, profile, signals, alpha, coldStartEnabled])
+  }, [allResources, profile, preferences])
 
-  // Filtered recommendations for Learner Platform and Catalog
-  const filteredCourses = useMemo(() => {
-    let pool = activeTab === 'catalog' ? catalog : computedRecommendations
+  // Filtered & Sorted Resources for Recommendation Page
+  const displayedRecommendations = useMemo(() => {
+    let list = [...scoredResources]
 
-    // Search query within the filtered results
-    if (searchQuery.trim() && activeTab === 'catalog') {
+    // Search Query Filter
+    if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
-      pool = pool.filter(c =>
-        (c.title && c.title.toLowerCase().includes(q)) ||
-        (c.description && c.description.toLowerCase().includes(q)) ||
-        (c.topic && c.topic.toLowerCase().includes(q))
+      list = list.filter(r =>
+        r.title.toLowerCase().includes(q) ||
+        r.topic.toLowerCase().includes(q) ||
+        r.provider.toLowerCase().includes(q) ||
+        (r.tags && r.tags.some(t => t.toLowerCase().includes(q)))
       )
     }
 
-    // Domain / Topic Filter
-    if (selectedDomain !== 'all') {
-      if (selectedDomain === 'ai') {
-        pool = pool.filter(c => ['Machine Learning', 'Generative AI', 'Deep Learning', 'Computer Vision', 'NLP'].some(t => c.topic?.toLowerCase().includes(t.toLowerCase())))
-      } else if (selectedDomain === 'python') {
-        pool = pool.filter(c => c.topic?.toLowerCase().includes('python'))
-      } else if (selectedDomain === 'web') {
-        pool = pool.filter(c => c.topic?.toLowerCase().includes('web') || c.topic?.toLowerCase().includes('react') || c.topic?.toLowerCase().includes('node'))
-      } else if (selectedDomain === 'cloud') {
-        pool = pool.filter(c => c.topic?.toLowerCase().includes('cloud') || c.topic?.toLowerCase().includes('aws') || c.topic?.toLowerCase().includes('mlops'))
-      } else {
-        pool = pool.filter(c => c.topic?.toLowerCase().includes(selectedDomain.toLowerCase()))
-      }
-    }
-
-    // Format Filter
-    if (selectedFormat !== 'all') {
-      pool = pool.filter(c => c.type && c.type.toLowerCase() === selectedFormat.toLowerCase())
+    // Topic Filter
+    if (selectedTopic !== 'all') {
+      list = list.filter(r => r.topic.toLowerCase() === selectedTopic.toLowerCase())
     }
 
     // Difficulty Filter
     if (selectedDifficulty !== 'all') {
-      pool = pool.filter(c => c.difficulty && c.difficulty.toLowerCase() === selectedDifficulty.toLowerCase())
+      list = list.filter(r => r.difficulty.toLowerCase() === selectedDifficulty.toLowerCase())
     }
 
-    return pool
-  }, [computedRecommendations, catalog, activeTab, searchQuery, selectedDomain, selectedFormat, selectedDifficulty])
+    // Format Filter
+    if (selectedFormat !== 'all') {
+      list = list.filter(r => r.type.toLowerCase() === selectedFormat.toLowerCase())
+    }
 
-  // Saved & Completed
-  const savedCourses = useMemo(() => {
-    return catalog.filter(c => interactions.saved.includes(c.id))
-  }, [catalog, interactions.saved])
+    // Price Filter
+    if (selectedPricing === 'free') {
+      list = list.filter(r => r.isFree)
+    }
 
-  const completedCourses = useMemo(() => {
-    return catalog.filter(c => interactions.completed.includes(c.id))
-  }, [catalog, interactions.completed])
+    // Sorting Logic
+    if (sortBy === 'relevance') {
+      list.sort((a, b) => b.relevanceScore - a.relevanceScore)
+    } else if (sortBy === 'rating') {
+      list.sort((a, b) => b.rating - a.rating)
+    } else if (sortBy === 'duration') {
+      list.sort((a, b) => parseInt(a.duration) - parseInt(b.duration))
+    }
 
-  const cbPercent = Math.round(alpha * 100)
-  const cfPercent = Math.round((1 - alpha) * 100)
+    return list
+  }, [scoredResources, searchQuery, selectedTopic, selectedDifficulty, selectedFormat, selectedPricing, sortBy])
 
-  const blendStatusText = useMemo(() => {
-    if (alpha >= 0.75) return `Content-Led (α = ${alpha.toFixed(2)})`
-    if (alpha <= 0.25) return `Collaborative-Led (α = ${alpha.toFixed(2)})`
-    return `Balanced Blend (α = ${alpha.toFixed(2)})`
-  }, [alpha])
+  // Saved resources list
+  const savedResourcesList = useMemo(() => {
+    return allResources.filter(r => activity.savedIds.includes(r.id))
+  }, [allResources, activity.savedIds])
 
-  const blendStatusClass = useMemo(() => {
-    if (alpha >= 0.75) return 'badge-content-led'
-    if (alpha <= 0.25) return 'badge-collab-led'
-    return 'badge-balanced'
-  }, [alpha])
+  // Profile Completeness metric
+  const profileCompleteness = useMemo(() => {
+    let score = 0
+    if (profile.name) score += 20
+    if (profile.experience) score += 20
+    if (profile.goal) score += 20
+    if (profile.interests && profile.interests.length >= 2) score += 20
+    if (profile.format) score += 10
+    if (profile.weeklyTime) score += 10
+    return Math.min(100, score)
+  }, [profile])
+
+  // ------------------------------------------------------------------------
+  // Handlers & Interactive Actions
+  // ------------------------------------------------------------------------
+  const toggleInterest = (topic) => {
+    setProfile(prev => {
+      const cur = prev.interests || []
+      const updated = cur.includes(topic)
+        ? cur.filter(t => t !== topic)
+        : [...cur, topic]
+      return { ...prev, interests: updated }
+    })
+  }
+
+  const toggleSaveResource = (resId, resTitle) => {
+    setActivity(prev => {
+      const isSaved = prev.savedIds.includes(resId)
+      const updatedSaved = isSaved
+        ? prev.savedIds.filter(id => id !== resId)
+        : [...prev.savedIds, resId]
+      
+      const eventMsg = isSaved ? `Removed "${resTitle?.slice(0, 28)}..." from library` : `Saved "${resTitle?.slice(0, 28)}..."`
+      showToast(eventMsg, isSaved ? 'info' : 'success')
+
+      return {
+        ...prev,
+        savedIds: updatedSaved,
+        recentEvents: [
+          { id: Date.now(), title: eventMsg, time: 'Just now', icon: isSaved ? '✕' : '🔖' },
+          ...prev.recentEvents.slice(0, 5)
+        ]
+      }
+    })
+  }
+
+  const toggleCompleteResource = (resId, resTitle) => {
+    setActivity(prev => {
+      const isDone = prev.completedIds.includes(resId)
+      const updatedDone = isDone
+        ? prev.completedIds.filter(id => id !== resId)
+        : [...prev.completedIds, resId]
+
+      const eventMsg = isDone ? `Unmarked "${resTitle?.slice(0, 28)}..."` : `Completed "${resTitle?.slice(0, 28)}..."`
+      showToast(eventMsg, isDone ? 'info' : 'success')
+
+      return {
+        ...prev,
+        completedIds: updatedDone,
+        hoursSpent: isDone ? Math.max(0, prev.hoursSpent - 3.5) : prev.hoursSpent + 3.5,
+        recentEvents: [
+          { id: Date.now(), title: eventMsg, time: 'Just now', icon: '✓' },
+          ...prev.recentEvents.slice(0, 5)
+        ]
+      }
+    })
+  }
+
+  const handleStartLearning = (resource) => {
+    setActiveCourse({
+      ...resource,
+      progress: 25,
+      currentLesson: 'Module 1: Principles & Fundamentals'
+    })
+    setActivity(prev => ({
+      ...prev,
+      sessionsCount: prev.sessionsCount + 1
+    }))
+    showToast(`Started: "${resource.title.slice(0, 30)}..."`, 'info')
+    if (resource.url) {
+      window.open(resource.url, '_blank', 'noopener,noreferrer')
+    }
+  }
+
+  const handleRateResource = (resId, rating) => {
+    setActivity(prev => ({
+      ...prev,
+      ratings: { ...prev.ratings, [resId]: rating }
+    }))
+    showToast(`Rated course ${rating} stars! Thank you for the feedback.`, 'success')
+  }
+
+  const handleGenerateRecommendations = () => {
+    setActiveSection('recommendations')
+    showToast("Recommendations personalized and updated for your profile!", "success")
+    const recSection = document.getElementById('recommendationsWorkspace')
+    if (recSection) {
+      recSection.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
+  const handleResetPreferences = () => {
+    setProfile({
+      name: 'Alex Morgan',
+      role: 'Verified Scholar',
+      experience: 'Intermediate',
+      goal: 'Build AI projects',
+      interests: ['Machine Learning', 'Generative AI', 'Python'],
+      format: 'Course',
+      weeklyTime: '7-10 hours',
+      studySchedule: 'Flexible / Self-paced'
+    })
+    setPreferences({
+      handsOnTheory: 75,
+      projectBased: 80,
+      contentLength: 'Medium (3-10 hrs)',
+      adaptiveDifficulty: true,
+      freeOnly: false,
+      certificationTrack: true
+    })
+    setSelectedTopic('all')
+    setSelectedDifficulty('all')
+    setSelectedFormat('all')
+    setSelectedPricing('all')
+    setSortBy('relevance')
+    setSearchQuery('')
+    showToast("All learning preferences restored to default prototype settings.", "info")
+  }
 
   return (
     <div className="app-layout">
-      {/* 1. SIDEBAR NAVIGATION */}
-      <aside id="sidebar" className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Primary Navigation">
+      {/* --------------------------------------------------------------------
+          1. PERSISTENT SIDEBAR NAVIGATION (DESKTOP & MOBILE DRAWER)
+          -------------------------------------------------------------------- */}
+      <aside className={`sidebar ${mobileMenuOpen ? 'mobile-open' : ''}`} aria-label="Main Navigation">
         <div className="sidebar-header">
-          <div className="brand-cluster" onClick={() => { setActiveTab('home'); setPlatformMode('learner'); }} style={{ cursor: 'pointer' }}>
+          <div className="brand-cluster" onClick={() => setActiveSection('overview')} style={{ cursor: 'pointer' }}>
             <div className="brand-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
             </div>
             <div>
               <h1 className="brand-title">LearnIQ</h1>
-              <p className="brand-tagline">
-                {platformMode === 'learner' ? 'Intelligent Learning Platform' : 'AI Recommendation Lab'}
-              </p>
+              <p className="brand-tagline">Personalized learning SaaS</p>
             </div>
           </div>
         </div>
 
-        {/* Global Platform Mode Switcher in Sidebar */}
-        <div style={{ padding: '0 1.25rem 1rem' }}>
-          <div className="mode-switcher-container" style={{ width: '100%', justifyContent: 'center' }}>
-            <button
-              type="button"
-              className={`btn-mode-tab ${platformMode === 'learner' ? 'active-learner' : ''}`}
-              style={{ flex: 1, justifyContent: 'center' }}
-              onClick={() => { setPlatformMode('learner'); setActiveTab('home'); }}
-            >
-              <span>🎓 Learner View</span>
-            </button>
-            <button
-              type="button"
-              className={`btn-mode-tab ${platformMode === 'lab' ? 'active-lab' : ''}`}
-              style={{ flex: 1, justifyContent: 'center' }}
-              onClick={() => { setPlatformMode('lab'); setActiveTab('workspace'); }}
-            >
-              <span>🧪 AI Lab Mode</span>
-            </button>
-          </div>
-        </div>
-
+        {/* Primary Navigation Menu */}
         <nav className="sidebar-nav">
-          <div className="nav-group-label">
-            {platformMode === 'learner' ? 'STUDENT PORTAL' : 'WORKSPACE SECTIONS'}
-          </div>
+          <div className="nav-group-label">Core Platform</div>
 
-          <ul className="nav-list">
-            {platformMode === 'learner' ? (
-              <>
-                <li>
-                  <a
-                    href="#home"
-                    className={`nav-item ${activeTab === 'home' ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); setActiveTab('home'); setMobileMenuOpen(false); }}
-                  >
-                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                      <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
-                    <span>Discover &amp; For You</span>
-                  </a>
-                </li>
+          <button
+            type="button"
+            className={`nav-item ${activeSection === 'overview' ? 'active' : ''}`}
+            onClick={() => { setActiveSection('overview'); setMobileMenuOpen(false); }}
+          >
+            <span className="nav-icon">📊</span>
+            <span>Overview</span>
+          </button>
 
-                <li>
-                  <a
-                    href="#roadmap"
-                    className={`nav-item ${activeTab === 'roadmap' ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); setActiveTab('roadmap'); setMobileMenuOpen(false); }}
-                  >
-                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="6" y1="3" x2="6" y2="15"></line>
-                      <circle cx="18" cy="6" r="3"></circle>
-                      <circle cx="6" cy="18" r="3"></circle>
-                      <path d="M18 9a9 9 0 0 1-9 9"></path>
-                    </svg>
-                    <span>Dynamic Roadmap</span>
-                    <span className="nav-pill pill-cb">Live</span>
-                  </a>
-                </li>
+          <button
+            type="button"
+            className={`nav-item ${activeSection === 'profile' ? 'active' : ''}`}
+            onClick={() => { setActiveSection('profile'); setMobileMenuOpen(false); }}
+          >
+            <span className="nav-icon">👤</span>
+            <span>My Profile</span>
+          </button>
 
-                <li>
-                  <a
-                    href="#catalog"
-                    className={`nav-item ${activeTab === 'catalog' ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); setActiveTab('catalog'); setMobileMenuOpen(false); }}
-                  >
-                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <span>Explore 300+ Courses</span>
-                    <span className="nav-badge">{catalog.length || '300+'}</span>
-                  </a>
-                </li>
+          <button
+            type="button"
+            className={`nav-item ${activeSection === 'preferences' ? 'active' : ''}`}
+            onClick={() => { setActiveSection('preferences'); setMobileMenuOpen(false); }}
+          >
+            <span className="nav-icon">⚙️</span>
+            <span>Learning Preferences</span>
+          </button>
 
-                <li>
-                  <a
-                    href="#dashboard"
-                    className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); setActiveTab('dashboard'); setMobileMenuOpen(false); }}
-                  >
-                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>My Learning</span>
-                    <span className="nav-pill pill-hybrid">{interactions.saved.length + interactions.completed.length}</span>
-                  </a>
-                </li>
-              </>
-            ) : (
-              <>
-                <li>
-                  <a
-                    href="#overview"
-                    className={`nav-item ${activeTab === 'workspace' ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); setActiveTab('workspace'); setMobileMenuOpen(false); }}
-                  >
-                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="7" height="9" rx="1"></rect>
-                      <rect x="14" y="3" width="7" height="5" rx="1"></rect>
-                      <rect x="14" y="12" width="7" height="9" rx="1"></rect>
-                      <rect x="3" y="16" width="7" height="5" rx="1"></rect>
-                    </svg>
-                    <span>Hybrid Formulation</span>
-                  </a>
-                </li>
+          <button
+            type="button"
+            className={`nav-item ${activeSection === 'activity' ? 'active' : ''}`}
+            onClick={() => { setActiveSection('activity'); setMobileMenuOpen(false); }}
+          >
+            <span className="nav-icon">⚡</span>
+            <span>Activity</span>
+            <span className="nav-badge-pill">{activity.completedIds.length}</span>
+          </button>
 
-                <li>
-                  <a
-                    href="#catalog"
-                    className={`nav-item ${activeTab === 'catalog' ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); setActiveTab('catalog'); setMobileMenuOpen(false); }}
-                  >
-                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                    </svg>
-                    <span>Full Catalog Pool</span>
-                    <span className="nav-badge">{catalog.length || '300+'}</span>
-                  </a>
-                </li>
+          <button
+            type="button"
+            className={`nav-item ${activeSection === 'recommendations' ? 'active' : ''}`}
+            onClick={() => { setActiveSection('recommendations'); setMobileMenuOpen(false); }}
+          >
+            <span className="nav-icon">✨</span>
+            <span>Recommendations</span>
+            <span className="nav-badge-pill highlight">{displayedRecommendations.length}</span>
+          </button>
 
-                <li>
-                  <a
-                    href="#dashboard"
-                    className={`nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-                    onClick={(e) => { e.preventDefault(); setActiveTab('dashboard'); setMobileMenuOpen(false); }}
-                  >
-                    <svg className="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>My Dashboard</span>
-                    <span className="nav-pill pill-hybrid">{interactions.saved.length + interactions.completed.length}</span>
-                  </a>
-                </li>
-              </>
-            )}
-          </ul>
+          <button
+            type="button"
+            className={`nav-item ${activeSection === 'saved' ? 'active' : ''}`}
+            onClick={() => { setActiveSection('saved'); setMobileMenuOpen(false); }}
+          >
+            <span className="nav-icon">🔖</span>
+            <span>Saved Resources</span>
+            <span className="nav-badge-pill">{activity.savedIds.length}</span>
+          </button>
 
-          {platformMode === 'lab' && (
-            <>
-              <div className="nav-group-label">CURRICULUM PRESETS</div>
-              <div className="preset-buttons">
-                <button type="button" className="btn-preset" onClick={() => loadPreset('genai')}>
-                  <span className="preset-dot dot-genai"></span>
-                  <span>Generative AI Engineer</span>
-                </button>
-                <button type="button" className="btn-preset" onClick={() => loadPreset('foundations')}>
-                  <span className="preset-dot dot-foundations"></span>
-                  <span>ML Fundamentals</span>
-                </button>
-                <button type="button" className="btn-preset" onClick={() => loadPreset('mlops')}>
-                  <span className="preset-dot dot-mlops"></span>
-                  <span>MLOps Transition</span>
-                </button>
-                <button type="button" className="btn-preset" onClick={() => loadPreset('webdev')}>
-                  <span className="preset-dot dot-genai" style={{ background: '#3b82f6' }}></span>
-                  <span>Web Development</span>
-                </button>
-              </div>
-            </>
-          )}
+          <button
+            type="button"
+            className={`nav-item ${activeSection === 'progress' ? 'active' : ''}`}
+            onClick={() => { setActiveSection('progress'); setMobileMenuOpen(false); }}
+          >
+            <span className="nav-icon">📈</span>
+            <span>Progress</span>
+          </button>
 
-          {platformMode === 'learner' && (
-            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
-              <div style={{ fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', marginBottom: '0.35rem' }}>CURRENT SKILL TARGET</div>
-              <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>{activeSkillGoal}</div>
-              <div style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '0.2rem' }}>Level: {profile.experience} • {profile.format}s</div>
-            </div>
-          )}
+          <div className="nav-group-label" style={{ marginTop: '1.25rem' }}>Preferences</div>
+
+          <button
+            type="button"
+            className={`nav-item ${activeSection === 'settings' ? 'active' : ''}`}
+            onClick={() => { setActiveSection('settings'); setMobileMenuOpen(false); }}
+          >
+            <span className="nav-icon">🛠️</span>
+            <span>Settings</span>
+          </button>
         </nav>
 
-        {/* Sidebar Status Panel */}
+        {/* Prototype Environment Status Card (As required in Section 6) */}
         <div className="sidebar-status-panel">
           <div className="status-indicator-row">
-            <span className="pulse-dot-green" aria-hidden="true"></span>
-            <span className="status-headline" style={{ color: '#34d399' }}>Live Cloud Storage</span>
+            <span className="pulse-dot-green"></span>
+            <span className="status-headline">Prototype Mode</span>
           </div>
           <p className="status-body">
-            Render API &amp; Supabase PostgreSQL persistent data sync.
+            Recommendations are generated from preference signals for this product prototype.
           </p>
           <div className="status-meta">
-            <span>Student: {currentUser ? currentUser.username : 'Guest Session'}</span>
+            <span>Catalog: {cloudConnected ? '300+ Cloud Courses' : 'Local Fast Demo'}</span>
           </div>
         </div>
       </aside>
@@ -1003,22 +897,26 @@ export default function App() {
         />
       )}
 
-      {/* MAIN CONTENT AREA */}
+      {/* --------------------------------------------------------------------
+          2. MAIN APPLICATION CONTENT AREA
+          -------------------------------------------------------------------- */}
       <main className="main-content" id="mainContent">
-        {/* Mobile Top Header */}
+        {/* Mobile Navigation Bar */}
         <header className="mobile-navbar">
-          <div className="brand-cluster">
+          <div className="brand-cluster" onClick={() => setActiveSection('overview')}>
             <div className="brand-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
               </svg>
             </div>
             <span className="brand-title">LearnIQ</span>
           </div>
+
           <button
+            type="button"
             className="btn-icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            aria-label="Toggle Navigation Menu"
+            aria-label="Toggle Navigation Drawer"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -1028,1637 +926,1297 @@ export default function App() {
           </button>
         </header>
 
-        {/* Top Header Bar with Mode Switcher & Student Account Button */}
+        {/* Professional SaaS Top Header */}
         <header className="workspace-header">
           <div className="header-left">
             <div className="breadcrumbs">
-              <span>LearnIQ Platform</span>
+              <span>LearnIQ</span>
               <span className="breadcrumb-separator">/</span>
-              <span className="breadcrumb-active">
-                {platformMode === 'learner' && activeTab === 'home' && 'Learner Portal'}
-                {platformMode === 'learner' && activeTab === 'roadmap' && 'Career Roadmap'}
-                {platformMode === 'learner' && activeTab === 'catalog' && 'Course Library'}
-                {platformMode === 'learner' && activeTab === 'dashboard' && 'My Learning'}
-                {platformMode === 'lab' && 'AI Recommendation Lab'}
-              </span>
-              <span className="badge-prod-connected">
-                <span className="pulse-dot-green"></span>
-                RENDER &amp; SUPABASE LIVE
+              <span className="breadcrumb-active" style={{ textTransform: 'capitalize' }}>
+                {activeSection === 'overview' && 'Overview Dashboard'}
+                {activeSection === 'profile' && 'Learner Profile'}
+                {activeSection === 'preferences' && 'Learning Preferences'}
+                {activeSection === 'activity' && 'Learning Activity'}
+                {activeSection === 'recommendations' && 'Recommendation Workspace'}
+                {activeSection === 'saved' && 'Saved Resources Library'}
+                {activeSection === 'progress' && 'Progress Dashboard'}
+                {activeSection === 'settings' && 'Platform Settings'}
               </span>
             </div>
+
             <h2 className="workspace-title">
-              {platformMode === 'learner' && activeTab === 'home' && 'Adaptive Learning Recommendations'}
-              {platformMode === 'learner' && activeTab === 'roadmap' && `${activeSkillGoal} Roadmap`}
-              {platformMode === 'learner' && activeTab === 'catalog' && 'Course & Article Catalog'}
-              {platformMode === 'learner' && activeTab === 'dashboard' && 'Student Learning Dashboard'}
-              {platformMode === 'lab' && 'Hybrid Model Lab & Parameters'}
+              {activeSection === 'overview' && 'What should you learn next?'}
+              {activeSection === 'profile' && 'Your Learning Profile'}
+              {activeSection === 'preferences' && 'Personalization Preferences'}
+              {activeSection === 'activity' && 'Your Learning Activity'}
+              {activeSection === 'recommendations' && 'Recommended for You'}
+              {activeSection === 'saved' && 'Your Saved Learning Library'}
+              {activeSection === 'progress' && 'Learning Progress & Milestones'}
+              {activeSection === 'settings' && 'Account & Application Settings'}
             </h2>
           </div>
 
+          {/* Header Actions & Profile */}
           <div className="header-actions">
-            {/* Mode Switcher */}
-            <div className="mode-switcher-container">
-              <button
-                type="button"
-                className={`btn-mode-tab ${platformMode === 'learner' ? 'active-learner' : ''}`}
-                onClick={() => { setPlatformMode('learner'); setActiveTab('home'); }}
-                title="Switch to clean consumer learning platform"
-              >
-                🎓 Learner View
-              </button>
-              <button
-                type="button"
-                className={`btn-mode-tab ${platformMode === 'lab' ? 'active-lab' : ''}`}
-                onClick={() => { setPlatformMode('lab'); setActiveTab('workspace'); }}
-                title="Switch to mathematical AI architecture lab"
-              >
-                🧪 AI Lab Mode
-              </button>
+            {/* Quick Global Search */}
+            <div className="header-search-wrap">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input
+                type="text"
+                placeholder="Quick search skills, courses..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value)
+                  if (activeSection !== 'recommendations' && e.target.value) {
+                    setActiveSection('recommendations')
+                  }
+                }}
+              />
             </div>
 
-            {/* Student Account Profile Button */}
-            {currentUser ? (
-              <div style={{ position: 'relative' }}>
-                <div
-                  className="auth-user-badge"
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  title="View Account Details"
-                >
-                  <div className="user-avatar-circle">
-                    {currentUser.name ? currentUser.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
-                  </div>
-                  <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff' }}>{currentUser.name}</div>
-                    <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>@{currentUser.username}</div>
-                  </div>
-                </div>
-
-                {userDropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '115%',
-                    right: 0,
-                    width: 240,
-                    background: 'var(--bg-sidebar)',
-                    border: '1px solid var(--border-medium)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: '0.85rem',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.6)',
-                    zIndex: 100
-                  }}>
-                    <div style={{ paddingBottom: '0.6rem', borderBottom: '1px solid var(--border-subtle)', marginBottom: '0.6rem' }}>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{currentUser.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 600 }}>{currentUser.role || 'Verified Student'}</div>
-                      <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '0.2rem' }}>Track: <strong>{activeSkillGoal}</strong></div>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#94a3b8', marginBottom: '0.75rem' }}>
-                      <span>Saved: <strong style={{ color: '#fff' }}>{interactions.saved.length}</strong></span>
-                      <span>Completed: <strong style={{ color: '#34d399' }}>{interactions.completed.length}</strong></span>
-                    </div>
-                    {currentUser.username !== 'alex_demo' && (
-                      <button
-                        type="button"
-                        style={{ width: '100%', textAlign: 'left', padding: '0.45rem', fontSize: '0.75rem', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', cursor: 'pointer', borderRadius: '4px', marginBottom: '0.5rem' }}
-                        onClick={handleInstantDemoLogin}
-                      >
-                        ⚡ Switch to Demo Student
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      style={{ width: '100%', textAlign: 'left', padding: '0.45rem', fontSize: '0.78rem', color: '#fb7185', background: 'none', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
-                      onClick={handleSignOut}
-                    >
-                      Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div style={{ display: 'flex', gap: '0.45rem', alignItems: 'center' }}>
-                <button
-                  type="button"
-                  className="btn-demo-quick"
-                  onClick={handleInstantDemoLogin}
-                  title="Instantly explore platform as Alex Morgan (Verified Scholar)"
-                >
-                  ⚡ Demo Student
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-secondary"
-                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                  onClick={() => { setAuthTab('login'); setAuthModalOpen(true); }}
-                >
-                  Sign In
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                  onClick={() => { setAuthTab('register'); setAuthModalOpen(true); }}
-                >
-                  Register
-                </button>
-              </div>
-            )}
-
+            {/* Primary Action Button */}
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={handleReset}
-              title="Reset preferences to default"
+              className="btn btn-primary"
+              onClick={handleGenerateRecommendations}
             >
-              Reset
+              <span>✨ Generate Recommendations</span>
             </button>
+
+            {/* Notification Bell */}
+            <div style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => setNotificationOpen(!notificationOpen)}
+                title="Notifications"
+                aria-label="View notifications"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+                <span className="notif-dot" />
+              </button>
+
+              {notificationOpen && (
+                <div className="dropdown-panel notif-dropdown">
+                  <div className="dropdown-header">
+                    <h4>Notifications</h4>
+                    <span style={{ fontSize: '0.7rem', color: '#38bdf8' }}>Recent Activity</span>
+                  </div>
+                  <div className="dropdown-list">
+                    {activity.recentEvents.map(evt => (
+                      <div key={evt.id} className="dropdown-item">
+                        <span style={{ fontSize: '1rem' }}>{evt.icon}</span>
+                        <div>
+                          <div style={{ fontSize: '0.78rem', color: '#fff' }}>{evt.title}</div>
+                          <div style={{ fontSize: '0.68rem', color: '#94a3b8' }}>{evt.time}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* User Profile Avatar with Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <div
+                className="auth-user-badge"
+                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                title="View Scholar Profile"
+              >
+                <div className="user-avatar-circle">
+                  {profile.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff' }}>{profile.name}</div>
+                  <div style={{ fontSize: '0.65rem', color: '#38bdf8' }}>{profile.role}</div>
+                </div>
+              </div>
+
+              {userMenuOpen && (
+                <div className="dropdown-panel user-dropdown">
+                  <div className="dropdown-header">
+                    <div>
+                      <div style={{ fontWeight: 700, color: '#fff' }}>{profile.name}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{profile.goal}</div>
+                    </div>
+                  </div>
+                  <div style={{ padding: '0.6rem 0.85rem', fontSize: '0.74rem', color: '#cbd5e1', borderBottom: '1px solid var(--border-subtle)' }}>
+                    <div>Track: <strong>{profile.experience}</strong></div>
+                    <div>Saved: <strong>{activity.savedIds.length}</strong> • Completed: <strong>{activity.completedIds.length}</strong></div>
+                  </div>
+                  <button
+                    type="button"
+                    className="dropdown-action-btn"
+                    onClick={() => { setActiveSection('profile'); setUserMenuOpen(false); }}
+                  >
+                    Edit Profile
+                  </button>
+                  <button
+                    type="button"
+                    className="dropdown-action-btn"
+                    onClick={() => { handleResetPreferences(); setUserMenuOpen(false); }}
+                  >
+                    Reset Demo Settings
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
 
-        {/* =========================================================================
-            WEBSITE 1: CLEAN CONSUMER LEARNER PLATFORM (NO MATHEMATICS / JARGON)
-           ========================================================================= */}
-        {platformMode === 'learner' && (
-          <>
-            {/* ONLY DISPLAY "CONTINUE LEARNING" IF STUDENT HAS AN ACTUAL ACTIVE COURSE! */}
+        {/* Cloud Warmup Banner if Render instance is spinning up */}
+        {cloudWakingUp && (
+          <div className="cloud-wakeup-banner">
+            <div className="pulse-dot-amber" />
+            <div>
+              <strong>Connecting to Render cloud catalog...</strong> The cloud service is spinning up (~30s). Local verified courses and dynamic recommendations are ready immediately!
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            SECTION 1: OVERVIEW DASHBOARD
+            ==================================================================== */}
+        {activeSection === 'overview' && (
+          <div className="dashboard-content">
+            {/* Top 6 KPI Metric Cards */}
+            <div className="overview-kpi-grid">
+              <div className="kpi-card" onClick={() => setActiveSection('recommendations')}>
+                <div className="kpi-icon-wrap bg-blue-subtle">✨</div>
+                <div>
+                  <div className="kpi-value">{scoredResources.length}</div>
+                  <div className="kpi-label">Recommended for You</div>
+                </div>
+                <span className="kpi-subtext">Personalized to profile</span>
+              </div>
+
+              <div className="kpi-card" onClick={() => setActiveSection('progress')}>
+                <div className="kpi-icon-wrap bg-emerald-subtle">📈</div>
+                <div>
+                  <div className="kpi-value">{Math.round((activity.completedIds.length / 10) * 100)}%</div>
+                  <div className="kpi-label">Learning Progress</div>
+                </div>
+                <span className="kpi-subtext">{activity.completedIds.length} modules finished</span>
+              </div>
+
+              <div className="kpi-card" onClick={() => setActiveSection('profile')}>
+                <div className="kpi-icon-wrap bg-purple-subtle">🧠</div>
+                <div>
+                  <div className="kpi-value">{profile.interests.length}</div>
+                  <div className="kpi-label">Active Topics</div>
+                </div>
+                <span className="kpi-subtext">Across {profile.experience} level</span>
+              </div>
+
+              <div className="kpi-card" onClick={() => setActiveSection('saved')}>
+                <div className="kpi-icon-wrap bg-amber-subtle">🔖</div>
+                <div>
+                  <div className="kpi-value">{activity.savedIds.length}</div>
+                  <div className="kpi-label">Saved Resources</div>
+                </div>
+                <span className="kpi-subtext">In your personal library</span>
+              </div>
+
+              <div className="kpi-card" onClick={() => setActiveSection('activity')}>
+                <div className="kpi-icon-wrap bg-rose-subtle">🔥</div>
+                <div>
+                  <div className="kpi-value">{activity.streakDays} Days</div>
+                  <div className="kpi-label">Learning Streak</div>
+                </div>
+                <span className="kpi-subtext">Active momentum</span>
+              </div>
+
+              <div className="kpi-card" onClick={() => setActiveSection('profile')}>
+                <div className="kpi-icon-wrap bg-cyan-subtle">👤</div>
+                <div>
+                  <div className="kpi-value">{profileCompleteness}%</div>
+                  <div className="kpi-label">Profile Complete</div>
+                </div>
+                <span className="kpi-subtext">Personalization accuracy</span>
+              </div>
+            </div>
+
+            {/* In-Progress "Continue Learning" Card */}
             {activeCourse && (
               <section className="continue-learning-card">
                 <div className="continue-learning-info">
                   <div className="continue-eyebrow">
-                    <span>⚡</span> CURRENT IN-PROGRESS COURSE
+                    <span>⚡</span> CURRENT IN-PROGRESS RESOURCE
                   </div>
                   <h3 className="continue-title">{activeCourse.title}</h3>
                   <div className="continue-meta">
-                    <span>Provider: <strong style={{ color: '#fff' }}>{activeCourse.source || 'Instructor'}</strong></span>
+                    <span>Provider: <strong style={{ color: '#fff' }}>{activeCourse.provider}</strong></span>
                     <span>•</span>
-                    <span>Format: <strong style={{ color: '#38bdf8' }}>{activeCourse.type || 'Course'}</strong></span>
+                    <span>Format: <strong style={{ color: '#38bdf8' }}>{activeCourse.type}</strong></span>
                     <span>•</span>
-                    <span>Level: <strong style={{ color: '#fff' }}>{activeCourse.difficulty || 'Intermediate'}</strong></span>
+                    <span>Level: <strong style={{ color: '#fff' }}>{activeCourse.difficulty}</strong></span>
+                    <span>•</span>
+                    <span>Duration: <strong style={{ color: '#cbd5e1' }}>{activeCourse.duration}</strong></span>
                   </div>
 
                   <div className="continue-progress-wrap">
                     <div className="continue-progress-bar">
                       <div className="continue-progress-fill" style={{ width: `${activeCourse.progress || 25}%` }}></div>
                     </div>
-                    <span style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#34d399' }}>
-                      {activeCourse.progress || 25}% Done
+                    <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#34d399' }}>
+                      {activeCourse.progress || 25}% Completed
                     </span>
                   </div>
                 </div>
 
                 <div className="continue-actions">
-                  <a
-                    href={activeCourse.url || '#'}
-                    target="_blank"
-                    rel="noreferrer"
+                  <button
+                    type="button"
                     className="btn-launch"
-                    style={{ padding: '0.65rem 1.35rem', fontSize: '0.85rem' }}
-                    onClick={() => handleAction(activeCourse, 'Clicked')}
+                    onClick={() => handleStartLearning(activeCourse)}
                   >
-                    <span>Resume Course</span>
+                    <span>Resume Learning</span>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <polygon points="5 3 19 12 5 21 5 3"></polygon>
                     </svg>
-                  </a>
+                  </button>
 
                   <button
                     type="button"
                     className="btn-action-outline"
-                    onClick={() => handleAction(activeCourse, 'Completed')}
-                    title="Mark this module as complete"
+                    onClick={() => toggleCompleteResource(activeCourse.id, activeCourse.title)}
                   >
-                    Mark Done ✓
+                    {activity.completedIds.includes(activeCourse.id) ? '✓ Completed' : 'Mark Done'}
                   </button>
                 </div>
               </section>
             )}
 
-            {/* TAB: DISCOVER / HOME VIEW */}
-            {activeTab === 'home' && (
-              <>
-                {/* Hero Discovery Section: OPEN SEARCH LANDING PAGE */}
-                <section className="learner-hero">
-                  <span className="learner-hero-eyebrow">
-                    <span>✨</span> WHAT DO YOU WANT TO LEARN?
-                  </span>
-                  <h1 className="learner-hero-title">
-                    Type Any Skill &amp; <span className="gradient-text">Generate Your Roadmap</span>
-                  </h1>
-                  <p className="learner-hero-desc">
-                    Search any technical topic below. LearnIQ instantly builds a customized 4-stage career roadmap and curates matching courses from our 300+ database.
-                  </p>
-
-                  {/* Search Bar that immediately generates roadmap & recommendations */}
-                  <form onSubmit={handleSkillSearch} className="learner-search-bar">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" style={{ marginRight: '0.75rem', flexShrink: 0 }}>
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input
-                      type="text"
-                      placeholder="Type a skill (e.g. Machine Learning, React, Python, Cloud, MLOps)..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    <button
-                      type="submit"
-                      className="btn-launch"
-                      style={{ padding: '0.55rem 1.25rem' }}
-                    >
-                      {loadingRecs ? 'Generating...' : 'Generate Roadmap'}
-                    </button>
-                  </form>
-
-                  {/* Quick Topics */}
-                  <div className="learner-quick-topics">
-                    <span>Popular skills:</span>
-                    {['Machine Learning', 'Generative AI', 'Python', 'Web Development', 'Cloud Computing'].map(t => (
-                      <span
-                        key={t}
-                        className="quick-topic-chip"
-                        onClick={() => {
-                          setSearchQuery(t)
-                          setActiveSkillGoal(t)
-                          fetchRecommendationsForGoal(t, profile.experience, profile.format)
-                        }}
-                      >
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-
-                {/* GUEST BANNER: INVITE TO REGISTER OR TRY 1-CLICK DEMO */}
-                {!currentUser && (
-                  <div style={{
-                    marginBottom: '2.5rem',
-                    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.08) 0%, rgba(168, 85, 247, 0.08) 100%)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
-                    borderRadius: 'var(--radius-lg)',
-                    padding: '1.25rem 1.5rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '1rem'
-                  }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <span style={{ fontSize: '1.5rem' }}>🎓</span>
-                      <div>
-                        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#fff' }}>Save your customized roadmap and course progress</div>
-                        <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Create an account or explore instantly with a verified scholar demo account.</div>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        className="btn-demo-quick"
-                        onClick={handleInstantDemoLogin}
-                        title="Instantly sign in as Alex Morgan"
-                      >
-                        ⚡ 1-Click Demo Access
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        onClick={() => { setAuthTab('register'); setAuthModalOpen(true); }}
-                      >
-                        Create Free Account
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* DYNAMIC ROADMAP PREVIEW (GENERATED DIRECTLY FOR THE TYPED TOPIC!) */}
-                <section style={{ marginBottom: '2.5rem', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-xl)', padding: '1.75rem 2rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.72rem', fontWeight: 700, color: '#38bdf8', marginBottom: '0.35rem' }}>
-                        <span>🗺️</span> DYNAMIC CAREER ROADMAP (FOR "{activeSkillGoal.toUpperCase()}")
-                      </div>
-                      <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff', margin: 0 }}>
-                        {currentDynamicRoadmap.title}
-                      </h3>
-                      <p style={{ fontSize: '0.825rem', color: '#94a3b8', margin: 0, marginTop: '0.2rem' }}>
-                        {currentDynamicRoadmap.description}
-                      </p>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#38bdf8' }}>
-                          {currentDynamicRoadmap.completedRoadmapCourses} / {currentDynamicRoadmap.totalRoadmapCourses} Courses Finished
-                        </div>
-                        <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                          Overall Progress: {currentDynamicRoadmap.overallPercent}%
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => setActiveTab('roadmap')}
-                      >
-                        Inspect Full Roadmap →
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Overall Roadmap Progress Bar */}
-                  <div className="roadmap-progress-bar-container">
-                    <div
-                      className="roadmap-progress-bar-fill"
-                      style={{ width: `${currentDynamicRoadmap.overallPercent}%` }}
-                    />
-                  </div>
-
-                  <div className="roadmap-steps-grid" style={{ marginTop: '1.5rem' }}>
-                    {currentDynamicRoadmap.steps.map(st => (
-                      <div
-                        key={st.id}
-                        className={`roadmap-step-card ${st.status === 'completed' ? 'is-completed' : ''} ${st.status === 'in-progress' ? 'is-active' : ''}`}
-                      >
-                        <div className="step-header-row">
-                          <div className="step-number-badge">
-                            {st.status === 'completed' ? '✓' : st.id}
-                          </div>
-                          <span className={`step-status-tag ${st.status === 'completed' ? 'tag-completed' : st.status === 'in-progress' ? 'tag-in-progress' : 'tag-upcoming'}`}>
-                            {st.status === 'completed' ? 'COMPLETED' : st.status === 'in-progress' ? 'IN PROGRESS' : 'UPCOMING'}
-                          </span>
-                        </div>
-                        <h4 className="step-title">{st.title}</h4>
-                        <p className="step-desc">{st.desc}</p>
-
-                        {/* Live Course Counter & Mini Progress Bar */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#38bdf8', marginBottom: '0.25rem' }}>
-                          <span>Stage Milestones</span>
-                          <span>{st.completedCount} / {st.totalCount} Done ({st.percent}%)</span>
-                        </div>
-                        <div className="roadmap-stage-progress-bar">
-                          <div
-                            className={`roadmap-stage-progress-fill ${st.status === 'completed' ? 'is-done' : ''}`}
-                            style={{ width: `${st.percent}%` }}
-                          />
-                        </div>
-
-                        {/* Real Curated Courses in this Stage */}
-                        <div className="roadmap-stage-courses">
-                          {st.courses.map(course => {
-                            const isCompleted = interactions.completed.includes(course.id)
-                            const isActive = activeCourse && activeCourse.id === course.id
-                            return (
-                              <div key={course.id} className={`roadmap-course-item ${isCompleted ? 'is-done' : ''} ${isActive ? 'is-active' : ''}`}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                    <span className="rec-type-pill" style={{ fontSize: '0.62rem', padding: '1px 5px' }}>{course.type || 'Course'}</span>
-                                    <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{course.difficulty}</span>
-                                  </div>
-                                  {course.rating && <span style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 600 }}>★ {course.rating}</span>}
-                                </div>
-                                <div className="roadmap-course-title" title={course.title}>
-                                  {course.title}
-                                </div>
-                                <div className="roadmap-course-actions">
-                                  <button
-                                    type="button"
-                                    className={`btn-roadmap-action ${isCompleted ? 'btn-done' : ''}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleAction(course, 'ToggleComplete')
-                                    }}
-                                    title={isCompleted ? 'Completed! Click to unmark' : 'Mark as complete to advance roadmap'}
-                                  >
-                                    {isCompleted ? '✓ Completed' : 'Mark Complete'}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn-roadmap-launch"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      handleAction(course, 'Clicked')
-                                      if (course.url) window.open(course.url, '_blank', 'noopener,noreferrer')
-                                    }}
-                                    title="Launch course and start learning"
-                                  >
-                                    Launch ↗
-                                  </button>
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-
-                        <div className="step-skills" style={{ marginTop: '0.85rem' }}>
-                          {st.skills.map((sk, idx) => (
-                            <span key={idx} className="step-skill-pill">{sk}</span>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Browse by Domain */}
-                <section style={{ marginBottom: '2.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                    <h3 style={{ fontSize: '1.35rem', fontWeight: 800, color: '#fff' }}>Explore Subject Tracks</h3>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Verified technical curricula</span>
-                  </div>
-
-                  <div className="domain-cards-grid">
-                    {DOMAINS.map(d => (
-                      <div
-                        key={d.id}
-                        className={`domain-card ${selectedDomain === d.id ? 'active' : ''}`}
-                        onClick={() => {
-                          setSelectedDomain(d.id)
-                          if (d.name !== 'All Subjects') {
-                            setActiveSkillGoal(d.name)
-                            fetchRecommendationsForGoal(d.name, profile.experience, profile.format)
-                          }
-                        }}
-                      >
-                        <div className="domain-card-icon">{d.icon}</div>
-                        <div className="domain-card-title">{d.name}</div>
-                        <div className="domain-card-count">{d.count} Courses &amp; Articles</div>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-
-                {/* "Curated For You" Courses Grid */}
-                <section id="curatedSection" style={{ marginBottom: '3rem' }}>
-                  {backendWakingUp && catalog.length === 0 && (
-                    <div className="cloud-wakeup-banner">
-                      <div className="pulse-dot-amber" />
-                      <div>
-                        <strong>Connecting to Render Cloud &amp; Supabase DB...</strong> The free-tier backend instance is spinning up (~30-45s on first visit). Your 4-stage Career Roadmap is ready above!
-                      </div>
-                    </div>
-                  )}
-
-                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
-                        <span className="badge-prod-connected">
-                          <span className="pulse-dot-green"></span>
-                          CURATED FOR {currentUser?.name ? currentUser.name.toUpperCase() : 'NEW STUDENT'}
-                        </span>
-                        <span className="results-badge">{filteredCourses.length} matched</span>
-                      </div>
-                      <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff' }}>Recommended Courses for "{activeSkillGoal}"</h2>
-                      <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: 0 }}>
-                        Ranked by affinity with your {profile.experience} level and interest in {profile.format}s.
-                      </p>
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        className={`filter-pill ${selectedFormat === 'all' ? 'active' : ''}`}
-                        onClick={() => setSelectedFormat('all')}
-                      >
-                        All Formats
-                      </button>
-                      <button
-                        type="button"
-                        className={`filter-pill ${selectedFormat === 'Video' ? 'active' : ''}`}
-                        onClick={() => setSelectedFormat('Video')}
-                      >
-                        📺 Videos
-                      </button>
-                      <button
-                        type="button"
-                        className={`filter-pill ${selectedFormat === 'Article' ? 'active' : ''}`}
-                        onClick={() => setSelectedFormat('Article')}
-                      >
-                        📰 Articles
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="recommendations-grid">
-                    {filteredCourses.map((item, idx) => {
-                      const isSaved = interactions.saved.includes(item.id)
-                      const isCompleted = interactions.completed.includes(item.id)
-
-                      return (
-                        <article key={item.id || idx} className="consumer-card">
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                              <span className="rec-type-pill">{item.type || 'Course'}</span>
-                              <span className="rec-provider">• {item.source || 'Instructor'}</span>
-                              {item.difficulty && (
-                                <span className="rec-provider" style={{ color: '#38bdf8' }}>• {item.difficulty}</span>
-                              )}
-                            </div>
-
-                            <span className="consumer-match-badge">
-                              {item.matchPercentage ? `${item.matchPercentage}% Match` : 'Top Match'}
-                            </span>
-                          </div>
-
-                          <h4 className="rec-title-link">{item.title}</h4>
-                          <p className="rec-description">{item.description || 'High-impact learning module designed to accelerate technical proficiency.'}</p>
-
-                          <div className="rec-tags">
-                            {item.topic && <span className="rec-tag tag-matched">{item.topic}</span>}
-                            {item.tags && item.tags.split(' ').slice(0, 3).map((t, tIdx) => (
-                              <span key={tIdx} className="rec-tag">{t}</span>
-                            ))}
-                          </div>
-
-                          <div className="rec-actions">
-                            <a
-                              href={item.url || '#'}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="btn-launch"
-                              onClick={() => handleAction(item, 'Clicked')}
-                            >
-                              <span>Launch Content</span>
-                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <line x1="7" y1="17" x2="17" y2="7"></line>
-                                <polyline points="7 7 17 7 17 17"></polyline>
-                              </svg>
-                            </a>
-
-                            <button
-                              type="button"
-                              className={`btn-action-outline ${isSaved ? 'is-saved' : ''}`}
-                              onClick={() => handleAction(item, 'Liked')}
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                              </svg>
-                              <span>{isSaved ? 'Saved' : 'Save'}</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              className={`btn-action-outline ${isCompleted ? 'is-completed' : ''}`}
-                              onClick={() => handleAction(item, 'Completed')}
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                              </svg>
-                              <span>{isCompleted ? 'Completed' : 'Mark Done'}</span>
-                            </button>
-                          </div>
-                        </article>
-                      )
-                    })}
-                  </div>
-
-                  {filteredCourses.length === 0 && (
-                    <div className="no-results-panel">
-                      <div className="no-results-icon">🔍</div>
-                      <h4>No matching courses found</h4>
-                      <p>Try searching for a different keyword or resetting your domain filters.</p>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => { setSearchQuery(''); setSelectedDomain('all'); setSelectedFormat('all'); }}
-                      >
-                        Reset Search Filters
-                      </button>
-                    </div>
-                  )}
-                </section>
-              </>
-            )}
-
-            {/* TAB: FEATURE 3 - DYNAMIC CAREER ROADMAP VIEW */}
-            {activeTab === 'roadmap' && (
-              <section className="roadmap-container">
-                <div className="roadmap-header">
-                  <div>
-                    <span className="learner-hero-eyebrow">
-                      <span>🗺️</span> DYNAMIC CAREER ROADMAP
-                    </span>
-                    <h2 className="roadmap-track-name">{currentDynamicRoadmap.title}</h2>
-                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', maxWidth: 680, marginTop: '0.4rem', margin: 0 }}>
-                      {currentDynamicRoadmap.description}
-                    </p>
-                  </div>
-
-                  {/* Skill Goal Input on Roadmap Page */}
-                  <form onSubmit={handleSkillSearch} style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <input
-                      type="text"
-                      className="auth-input"
-                      style={{ minWidth: 240 }}
-                      placeholder="Type a new skill (e.g. React, Cloud, Python)..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
-                    <button type="submit" className="btn btn-primary">
-                      Generate Roadmap
-                    </button>
-                  </form>
-                </div>
-
-                {/* Quick Topics Chips */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 600 }}>Switch track:</span>
-                  {['Machine Learning', 'Generative AI', 'Python', 'Web Development', 'Cloud Computing', 'Deep Learning', 'Data Science'].map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      className={`filter-pill ${activeSkillGoal.toLowerCase() === t.toLowerCase() ? 'active' : ''}`}
-                      style={{ fontSize: '0.72rem', padding: '3px 10px' }}
-                      onClick={() => {
-                        setSearchQuery(t)
-                        setActiveSkillGoal(t)
-                        fetchRecommendationsForGoal(t, profile.experience, profile.format)
-                      }}
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-
-                {/* MASTER ROADMAP PROGRESS BAR & SUMMARY */}
-                <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-lg)', padding: '1.25rem 1.5rem', marginBottom: '2rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                    <div>
-                      <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>
-                        Overall Learning Path Completion
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                        Track your progress across all 4 career milestones for <strong>{activeSkillGoal}</strong>.
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#38bdf8' }}>
-                      {currentDynamicRoadmap.completedRoadmapCourses} / {currentDynamicRoadmap.totalRoadmapCourses} Courses Finished ({currentDynamicRoadmap.overallPercent}%)
-                    </div>
-                  </div>
-                  <div className="roadmap-progress-bar-container" style={{ height: '10px' }}>
-                    <div
-                      className="roadmap-progress-bar-fill"
-                      style={{ width: `${currentDynamicRoadmap.overallPercent}%` }}
-                    />
-                  </div>
-                </div>
-
-                {/* Milestone Steps Grid */}
-                <div className="roadmap-steps-grid">
-                  {currentDynamicRoadmap.steps.map((st) => (
-                    <div
-                      key={st.id}
-                      className={`roadmap-step-card ${st.status === 'completed' ? 'is-completed' : ''} ${st.status === 'in-progress' ? 'is-active' : ''}`}
-                    >
-                      <div className="step-header-row">
-                        <div className="step-number-badge">
-                          {st.status === 'completed' ? '✓' : st.id}
-                        </div>
-                        <span className={`step-status-tag ${st.status === 'completed' ? 'tag-completed' : st.status === 'in-progress' ? 'tag-in-progress' : 'tag-upcoming'}`}>
-                          {st.status === 'completed' ? 'COMPLETED' : st.status === 'in-progress' ? 'IN PROGRESS' : 'UPCOMING'}
-                        </span>
-                      </div>
-
-                      <h4 className="step-title">{st.title}</h4>
-                      <p className="step-desc">{st.desc}</p>
-
-                      {/* Live Course Counter & Mini Progress Bar */}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', fontWeight: 600, color: '#38bdf8', marginBottom: '0.25rem' }}>
-                        <span>Stage Milestones</span>
-                        <span>{st.completedCount} / {st.totalCount} Done ({st.percent}%)</span>
-                      </div>
-                      <div className="roadmap-stage-progress-bar">
-                        <div
-                          className={`roadmap-stage-progress-fill ${st.status === 'completed' ? 'is-done' : ''}`}
-                          style={{ width: `${st.percent}%` }}
-                        />
-                      </div>
-
-                      {/* Real Curated Courses in this Stage */}
-                      <div className="roadmap-stage-courses">
-                        {st.courses.map(course => {
-                          const isCompleted = interactions.completed.includes(course.id)
-                          const isActive = activeCourse && activeCourse.id === course.id
-                          return (
-                            <div key={course.id} className={`roadmap-course-item ${isCompleted ? 'is-done' : ''} ${isActive ? 'is-active' : ''}`}>
-                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                                  <span className="rec-type-pill" style={{ fontSize: '0.62rem', padding: '1px 5px' }}>{course.type || 'Course'}</span>
-                                  <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>{course.difficulty}</span>
-                                </div>
-                                {course.rating && <span style={{ fontSize: '0.7rem', color: '#fbbf24', fontWeight: 600 }}>★ {course.rating}</span>}
-                              </div>
-                              <div className="roadmap-course-title" title={course.title}>
-                                {course.title}
-                              </div>
-                              <div className="roadmap-course-actions">
-                                <button
-                                  type="button"
-                                  className={`btn-roadmap-action ${isCompleted ? 'btn-done' : ''}`}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleAction(course, 'ToggleComplete')
-                                  }}
-                                  title={isCompleted ? 'Completed! Click to unmark' : 'Mark as complete to advance roadmap'}
-                                >
-                                  {isCompleted ? '✓ Completed' : 'Mark Complete'}
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn-roadmap-launch"
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    handleAction(course, 'Clicked')
-                                    if (course.url) window.open(course.url, '_blank', 'noopener,noreferrer')
-                                  }}
-                                  title="Launch course and start learning"
-                                >
-                                  Launch ↗
-                                </button>
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-
-                      <div className="step-skills" style={{ marginTop: '0.85rem' }}>
-                        {st.skills.map((sk, skIdx) => (
-                          <span key={skIdx} className="step-skill-pill">{sk}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* TAB: EXPLORE CATALOG */}
-            {activeTab === 'catalog' && (
-              <section className="section-recommendations">
-                {backendWakingUp && catalog.length === 0 && (
-                  <div className="cloud-wakeup-banner">
-                    <div className="pulse-dot-amber" />
-                    <div>
-                      <strong>Connecting to Render Cloud...</strong> Loading full catalog from PostgreSQL database (~30-45s cold start).
-                    </div>
-                  </div>
-                )}
-
-                <div className="catalog-toolbar">
-                  <div className="catalog-search-row">
-                    <div className="search-box" style={{ flex: 1 }}>
-                      <svg className="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                      </svg>
-                      <input
-                        type="text"
-                        placeholder="Search all 300+ courses by title, instructor, skill..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
-                    </div>
-
-                    <div className="select-wrapper" style={{ minWidth: 160 }}>
-                      <select
-                        className="form-select"
-                        value={selectedFormat}
-                        onChange={(e) => setSelectedFormat(e.target.value)}
-                      >
-                        <option value="all">All Formats</option>
-                        <option value="Video">Video Courses</option>
-                        <option value="Article">Technical Articles</option>
-                        <option value="Course">Full Courses</option>
-                      </select>
-                      <span className="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-
-                    <div className="select-wrapper" style={{ minWidth: 160 }}>
-                      <select
-                        className="form-select"
-                        value={selectedDifficulty}
-                        onChange={(e) => setSelectedDifficulty(e.target.value)}
-                      >
-                        <option value="all">All Difficulties</option>
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
-                      </select>
-                      <span className="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-                  </div>
-
-                  {/* Topic Filter Pills */}
-                  <div className="rec-filter-pills" style={{ marginBottom: 0 }}>
-                    <button
-                      type="button"
-                      className={`filter-pill ${selectedDomain === 'all' ? 'active' : ''}`}
-                      onClick={() => setSelectedDomain('all')}
-                    >
-                      All Subjects ({catalog.length})
-                    </button>
-                    {TOPIC_OPTIONS.map(topic => (
-                      <button
-                        key={topic}
-                        type="button"
-                        className={`filter-pill ${selectedDomain === topic ? 'active' : ''}`}
-                        onClick={() => setSelectedDomain(topic)}
-                      >
-                        {topic}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="recommendations-grid">
-                  {filteredCourses.map((item, idx) => {
-                    const isSaved = interactions.saved.includes(item.id)
-                    const isCompleted = interactions.completed.includes(item.id)
-
-                    return (
-                      <article key={item.id || idx} className="consumer-card">
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-                            <span className="rec-type-pill">{item.type || 'Resource'}</span>
-                            <span className="rec-provider">• {item.source || 'Verified'}</span>
-                            {item.difficulty && (
-                              <span className="rec-provider" style={{ color: '#38bdf8' }}>• {item.difficulty}</span>
-                            )}
-                          </div>
-                          <span className="badge-rank-index">{item.rating ? `${item.rating} ★` : '4.8 ★'}</span>
-                        </div>
-
-                        <h4 className="rec-title-link">{item.title}</h4>
-                        <p className="rec-description">{item.description || 'Verified educational curriculum.'}</p>
-
-                        <div className="rec-tags">
-                          {item.topic && <span className="rec-tag tag-matched">{item.topic}</span>}
-                          {item.tags && item.tags.split(' ').slice(0, 3).map((t, i) => (
-                            <span key={i} className="rec-tag">{t}</span>
-                          ))}
-                        </div>
-
-                        <div className="rec-actions">
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="btn-launch"
-                            onClick={() => handleAction(item, 'Clicked')}
-                          >
-                            <span>Launch Content</span>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <line x1="7" y1="17" x2="17" y2="7"></line>
-                              <polyline points="7 7 17 7 17 17"></polyline>
-                            </svg>
-                          </a>
-
-                          <button
-                            type="button"
-                            className={`btn-action-outline ${isSaved ? 'is-saved' : ''}`}
-                            onClick={() => handleAction(item, 'Liked')}
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill={isSaved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-                            </svg>
-                            <span>{isSaved ? 'Saved' : 'Save'}</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            className={`btn-action-outline ${isCompleted ? 'is-completed' : ''}`}
-                            onClick={() => handleAction(item, 'Completed')}
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                            <span>{isCompleted ? 'Completed' : 'Mark Done'}</span>
-                          </button>
-                        </div>
-                      </article>
-                    )
-                  })}
-                </div>
-              </section>
-            )}
-
-            {/* TAB: MY LEARNING DASHBOARD */}
-            {activeTab === 'dashboard' && (
-              <section className="section-recommendations">
-                <div className="dashboard-stats-banner">
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-icon" style={{ background: 'rgba(16, 185, 129, 0.15)', color: '#34d399' }}>
-                      ✓
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{completedCourses.length}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Completed Modules</div>
-                    </div>
-                  </div>
-
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-icon" style={{ background: 'rgba(244, 63, 94, 0.15)', color: '#fb7185' }}>
-                      ♥
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{savedCourses.length}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Wishlist Courses</div>
-                    </div>
-                  </div>
-
-                  <div className="dashboard-stat-card">
-                    <div className="dashboard-stat-icon" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
-                      ⚡
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-mono)' }}>{activeCourse ? 1 : 0}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>In-Progress Course</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Completed Courses Section */}
-                <div style={{ marginBottom: '3rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                    <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ color: '#34d399' }}>✓</span> Completed Modules ({completedCourses.length})
-                    </h3>
-                  </div>
-
-                  {completedCourses.length === 0 ? (
-                    <div className="no-results-panel" style={{ padding: '2rem' }}>
-                      <p style={{ margin: 0 }}>No completed courses yet. Search for a skill above and click "Mark Done" to track your achievements here!</p>
-                    </div>
-                  ) : (
-                    <div className="recommendations-grid">
-                      {completedCourses.map(item => (
-                        <article key={item.id} className="consumer-card" style={{ borderTop: '3px solid #10b981' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span className="rec-type-pill">{item.type || 'Course'}</span>
-                            <span className="mini-signal-badge" style={{ color: '#34d399' }}>COMPLETED</span>
-                          </div>
-                          <h4 className="rec-title-link">{item.title}</h4>
-                          <p className="rec-description">{item.description}</p>
-                          <div className="rec-actions">
-                            <a href={item.url} target="_blank" rel="noreferrer" className="btn-launch">
-                              Review Content
-                            </a>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Saved for Later Section */}
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.25rem' }}>
-                    <h3 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <span style={{ color: '#fb7185' }}>♥</span> Saved Wishlist ({savedCourses.length})
-                    </h3>
-                  </div>
-
-                  {savedCourses.length === 0 ? (
-                    <div className="no-results-panel" style={{ padding: '2rem' }}>
-                      <p style={{ margin: 0 }}>No saved courses in your wishlist. Click "Save" on courses you want to study next.</p>
-                    </div>
-                  ) : (
-                    <div className="recommendations-grid">
-                      {savedCourses.map(item => (
-                        <article key={item.id} className="consumer-card" style={{ borderTop: '3px solid #f43f5e' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span className="rec-type-pill">{item.type || 'Course'}</span>
-                            <span className="mini-signal-badge" style={{ color: '#fb7185' }}>WISHLIST</span>
-                          </div>
-                          <h4 className="rec-title-link">{item.title}</h4>
-                          <p className="rec-description">{item.description}</p>
-                          <div className="rec-actions">
-                            <a href={item.url} target="_blank" rel="noreferrer" className="btn-launch">
-                              Start Learning
-                            </a>
-                            <button
-                              type="button"
-                              className="btn-action-outline"
-                              onClick={() => {
-                                setInteractions(prev => ({
-                                  ...prev,
-                                  saved: prev.saved.filter(id => id !== item.id)
-                                }))
-                                showToast("Removed from saved list", "info")
-                              }}
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </section>
-            )}
-          </>
-        )}
-
-        {/* =========================================================================
-            WEBSITE 2: AI ARCHITECTURE LAB (PRESERVED MATHEMATICAL FORMULATION VIEW)
-           ========================================================================= */}
-        {platformMode === 'lab' && (
-          <>
-            <section id="overview" className="section-overview" aria-labelledby="overviewHeading">
-              <div className="hero-card glass-panel">
-                <div className="hero-header-row">
-                  <div>
-                    <span className="eyebrow eyebrow-hybrid">MATHEMATICAL FORMULATION</span>
-                    <h3 id="overviewHeading" className="hero-title">HYBRID SCORE</h3>
-                  </div>
-                  <div className="badge-prod-connected" title="Connected to live FastAPI backend on Render">
-                    <span className="pulse-dot-green"></span>
-                    Live Production Model • 300+ Resources Ingested
-                  </div>
-                </div>
-
-                <div className="formula-banner">
-                  <div className="formula-equation" aria-label="Hybrid formula: H equals alpha times CB plus 1 minus alpha times CF">
-                    <span className="formula-token token-h">H</span>
-                    <span className="formula-op">=</span>
-                    <span className="formula-token token-alpha">α</span>
-                    <span className="formula-op">·</span>
-                    <span className="formula-token token-cb">CB</span>
-                    <span className="formula-op">+</span>
-                    <span className="formula-token token-parens">(1 − α)</span>
-                    <span className="formula-op">·</span>
-                    <span className="formula-token token-cf">CF</span>
-                  </div>
-                  <div className="formula-subtext">
-                    Where <strong className="text-cb">CB</strong> is Content-Based Similarity (TF-IDF), <strong className="text-cf">CF</strong> is Collaborative Affinity (Matrix Factorization), and <strong className="text-hybrid">α</strong> is your weighting factor.
-                  </div>
-                </div>
-
-                <div className="metrics-grid">
-                  <div className="metric-card metric-ratio">
-                    <div className="metric-label">WEIGHT BLEND RATIO</div>
-                    <div className="metric-value-huge">
-                      <span className="text-cb">{cbPercent}</span>
-                      <span className="ratio-divider">/</span>
-                      <span className="text-cf">{cfPercent}</span>
-                    </div>
-                    <div className="metric-legend">
-                      <span className="legend-item"><span className="dot-cb"></span> Content (α)</span>
-                      <span className="legend-item"><span className="dot-cf"></span> Collaborative (1−α)</span>
-                    </div>
-                    <div className="split-bar-track" aria-hidden="true">
-                      <div className="split-bar-cb" style={{ width: `${cbPercent}%` }}></div>
-                      <div className="split-bar-cf" style={{ width: `${cfPercent}%` }}></div>
-                    </div>
-                  </div>
-
-                  <div className="metric-card">
-                    <div className="metric-label">PROFILE COMPLETENESS</div>
-                    <div className="metric-value-large">{profileCompleteness}%</div>
-                    <div className="meter-bar-track">
-                      <div className="meter-bar-fill" style={{ width: `${profileCompleteness}%` }}></div>
-                    </div>
-                    <div className="metric-caption">Dynamic goal: "{activeSkillGoal}"</div>
-                  </div>
-
-                  <div className="metric-card">
-                    <div className="metric-label">AVAILABLE SIGNALS</div>
-                    <div className="metric-value-large">{totalSignals}</div>
-                    <div className="signals-badge-list">
-                      <span className="mini-signal-badge">{signals.completed} Completed</span>
-                      <span className="mini-signal-badge">{signals.saved} Saved</span>
-                      <span className="mini-signal-badge">{signals.ratings} Ratings</span>
-                      <span className="mini-signal-badge">{signals.sessions} Sessions</span>
-                    </div>
-                    <div className="metric-caption">Real student interactions</div>
-                  </div>
-
-                  <div className="metric-card">
-                    <div className="metric-label">DATABASE POOL</div>
-                    <div className="metric-value-large">{catalog.length || '300+'}</div>
-                    <div className={`blend-status-badge ${blendStatusClass}`}>
-                      {blendStatusText}
-                    </div>
-                    <div className="metric-caption">Live Supabase PostgreSQL records</div>
-                  </div>
-                </div>
+            {/* Top Recommended Highlights */}
+            <div className="section-header-row">
+              <div>
+                <h3 className="section-title">Top Recommendations for Your Goal</h3>
+                <p className="section-subtitle">
+                  Curated specifically for <strong>{profile.goal}</strong> and your <strong>{profile.experience}</strong> experience level.
+                </p>
               </div>
-            </section>
-
-            <div className="input-columns-grid">
-              <section id="learner-profile" className="section-card glass-panel section-cb" aria-labelledby="cbSectionHeading">
-                <div className="section-header">
-                  <div className="section-title-wrap">
-                    <span className="section-category-pill pill-cb">CONTENT-BASED INPUTS (CB)</span>
-                    <h3 id="cbSectionHeading" className="section-title">Learner Profile</h3>
-                    <p className="section-subtitle">Parameters driving semantic similarity vectors against curriculum content.</p>
-                  </div>
-                  <div className="section-badge-icon badge-cb-icon" aria-hidden="true">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                    </svg>
-                  </div>
-                </div>
-
-                <form className="cb-form" onSubmit={(e) => { e.preventDefault(); fetchRecommendationsForGoal(activeSkillGoal, profile.experience, profile.format); }}>
-                  <div className="form-group full-width-group">
-                    <label className="form-label">
-                      <span>Target Learning Skill</span>
-                      <span className="label-hint">Dynamic Goal</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="form-select"
-                      style={{ paddingRight: '1rem' }}
-                      value={activeSkillGoal}
-                      onChange={(e) => setActiveSkillGoal(e.target.value)}
-                      placeholder="e.g. Machine Learning, Python..."
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      <span>Experience Level</span>
-                      <span className="label-hint">Difficulty threshold</span>
-                    </label>
-                    <div className="select-wrapper">
-                      <select
-                        className="form-select"
-                        value={profile.experience}
-                        onChange={(e) => setProfile(prev => ({ ...prev, experience: e.target.value }))}
-                      >
-                        <option value="Beginner">Beginner</option>
-                        <option value="Intermediate">Intermediate</option>
-                        <option value="Advanced">Advanced</option>
-                      </select>
-                      <span className="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-                  </div>
-
-                  <div className="form-group">
-                    <label className="form-label">
-                      <span>Preferred Format</span>
-                      <span className="label-hint">Prioritized media</span>
-                    </label>
-                    <div className="select-wrapper">
-                      <select
-                        className="form-select"
-                        value={profile.format}
-                        onChange={(e) => setProfile(prev => ({ ...prev, format: e.target.value }))}
-                      >
-                        <option value="Video">Video (YouTube)</option>
-                        <option value="Article">Article (Dev.to)</option>
-                        <option value="Course">Full Course</option>
-                      </select>
-                      <span className="select-arrow" aria-hidden="true">▼</span>
-                    </div>
-                  </div>
-
-                  <div className="form-group full-width-group">
-                    <div className="form-label">
-                      <span>Domain Topics</span>
-                      <span className="label-hint">{profile.topics?.length || 0} selected</span>
-                    </div>
-                    <div className="chips-container" role="group">
-                      {TOPIC_OPTIONS.map(topic => {
-                        const active = profile.topics?.includes(topic)
-                        return (
-                          <button
-                            key={topic}
-                            type="button"
-                            className={`topic-chip ${active ? 'active' : ''}`}
-                            onClick={() => toggleTopic(topic)}
-                            aria-pressed={active}
-                          >
-                            <span className="chip-check">{active ? '✓' : '+'}</span> {topic}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </form>
-              </section>
-
-              <section id="learning-signals" className="section-card glass-panel section-cf" aria-labelledby="cfSectionHeading">
-                <div className="section-header">
-                  <div className="section-title-wrap">
-                    <span className="section-category-pill pill-cf">COLLABORATIVE INPUTS (CF)</span>
-                    <h3 id="cfSectionHeading" className="section-title">Learning Signals</h3>
-                    <p className="section-subtitle">Real interaction patterns feeding collaborative matrix factorization.</p>
-                  </div>
-                  <div className="section-badge-icon badge-cf-icon" aria-hidden="true">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                  </div>
-                </div>
-
-                <div className="signals-stepper-list">
-                  <div className="signal-card">
-                    <div className="signal-info">
-                      <div className="signal-label-row">
-                        <span className="signal-title">Completed Resources</span>
-                        <span className="signal-tag">Real</span>
-                      </div>
-                      <p className="signal-desc">Completed modules in your student trajectory ({interactions.completed.length} total).</p>
-                    </div>
-                    <div className="stepper-controls">
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('completed', -1)}>−</button>
-                      <span className="stepper-value">{signals.completed}</span>
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('completed', 1)}>+</button>
-                    </div>
-                  </div>
-
-                  <div className="signal-card">
-                    <div className="signal-info">
-                      <div className="signal-label-row">
-                        <span className="signal-title">Saved Resources</span>
-                        <span className="signal-tag">Wishlist</span>
-                      </div>
-                      <p className="signal-desc">Saved bookmarks in library ({interactions.saved.length} total).</p>
-                    </div>
-                    <div className="stepper-controls">
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('saved', -1)}>−</button>
-                      <span className="stepper-value">{signals.saved}</span>
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('saved', 1)}>+</button>
-                    </div>
-                  </div>
-
-                  <div className="signal-card">
-                    <div className="signal-info">
-                      <div className="signal-label-row">
-                        <span className="signal-title">Active Study Sessions</span>
-                        <span className="signal-tag">Recency</span>
-                      </div>
-                      <p className="signal-desc">Logged study sessions in your active account.</p>
-                    </div>
-                    <div className="stepper-controls">
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('sessions', -1)}>−</button>
-                      <span className="stepper-value">{signals.sessions}</span>
-                      <button type="button" className="btn-stepper" onClick={() => adjustSignal('sessions', 1)}>+</button>
-                    </div>
-                  </div>
-                </div>
-              </section>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setActiveSection('recommendations')}
+              >
+                View All ({scoredResources.length}) →
+              </button>
             </div>
 
-            <section id="hybrid-model" className="section-card glass-panel section-hybrid" aria-labelledby="hybridSectionHeading">
-              <div className="section-header">
-                <div className="section-title-wrap">
-                  <span className="section-category-pill pill-hybrid">HYBRID MODEL PARAMETERS</span>
-                  <h3 id="hybridSectionHeading" className="section-title">Hybrid Model Controls</h3>
-                  <p className="section-subtitle">
-                    Adjust the weighting coefficient α to dynamically balance semantic profile matching against collaborative peer signals.
-                  </p>
-                </div>
-                <div className={`blend-status-badge ${blendStatusClass}`}>
-                  {blendStatusText}
-                </div>
-              </div>
-
-              <div className="hybrid-controls-layout">
-                <div className="slider-control-block">
-                  <div className="slider-header-row">
-                    <label htmlFor="alphaSlider" className="slider-main-label">
-                      <span>Content-Based Weight (α)</span>
-                      <span className="slider-alpha-value">{alpha.toFixed(2)}</span>
-                    </label>
-                    <div className="blend-percentages-tag">
-                      <span className="cb-pct">CB {cbPercent}%</span>
-                      <span className="pct-plus">+</span>
-                      <span className="cf-pct">CF {cfPercent}%</span>
+            <div className="recommendations-grid">
+              {scoredResources.slice(0, 3).map((res) => {
+                const isSaved = activity.savedIds.includes(res.id)
+                const isCompleted = activity.completedIds.includes(res.id)
+                return (
+                  <article key={res.id} className="saas-card" onClick={() => setModalResource(res)}>
+                    <div className="saas-card-header">
+                      <div className="card-badge-row">
+                        <span className="badge-pill badge-type">{res.type}</span>
+                        <span className="badge-pill badge-level">{res.difficulty}</span>
+                        <span className="badge-pill badge-topic">{res.topic}</span>
+                      </div>
+                      <span className="card-match-badge">{res.relevanceScore}% Match</span>
                     </div>
-                  </div>
 
-                  <div className="slider-container">
-                    <input
-                      type="range"
-                      id="alphaSlider"
-                      min="0.00"
-                      max="1.00"
-                      step="0.01"
-                      value={alpha}
-                      onChange={(e) => setAlpha(parseFloat(e.target.value))}
-                      aria-label="Content-Based Weight Alpha"
-                    />
-                    <div className="slider-ticks" aria-hidden="true">
-                      <span className="tick" style={{ left: '0%' }}><em>0.0</em> CF Only</span>
-                      <span className="tick" style={{ left: '25%' }}><em>0.25</em></span>
-                      <span className="tick" style={{ left: '50%' }}><em>0.50</em> Balanced</span>
-                      <span className="tick" style={{ left: '75%' }}><em>0.75</em></span>
-                      <span className="tick" style={{ left: '100%' }}><em>1.0</em> CB Only</span>
+                    <h4 className="card-title">{res.title}</h4>
+                    <p className="card-desc">{res.description}</p>
+
+                    {/* Why this resource component */}
+                    <div className="why-recommended-box">
+                      <span className="why-icon">💡</span>
+                      <span>{res.whyRecommended}</span>
                     </div>
-                  </div>
 
-                  <div className="slider-presets">
-                    <span className="presets-label">Quick blend:</span>
-                    <button type="button" className={`btn-chip-sm ${alpha === 1.0 ? 'active' : ''}`} onClick={() => setAlpha(1.0)}>Pure CB (1.0)</button>
-                    <button type="button" className={`btn-chip-sm ${alpha === 0.75 ? 'active' : ''}`} onClick={() => setAlpha(0.75)}>Content Bias (0.75)</button>
-                    <button type="button" className={`btn-chip-sm ${alpha === 0.60 ? 'active' : ''}`} onClick={() => setAlpha(0.60)}>Default (0.60)</button>
-                    <button type="button" className={`btn-chip-sm ${alpha === 0.50 ? 'active' : ''}`} onClick={() => setAlpha(0.50)}>Equal 50/50</button>
-                    <button type="button" className={`btn-chip-sm ${alpha === 0.25 ? 'active' : ''}`} onClick={() => setAlpha(0.25)}>Collab Bias (0.25)</button>
-                    <button type="button" className={`btn-chip-sm ${alpha === 0.0 ? 'active' : ''}`} onClick={() => setAlpha(0.0)}>Pure CF (0.0)</button>
-                  </div>
-                </div>
-
-                <div className="toggles-grid">
-                  <div className="toggle-card">
-                    <div className="toggle-info">
-                      <div className="toggle-title">Explain Recommendations</div>
-                      <p className="toggle-desc">Expose explicit score decomposition: CB similarity factors, CF affinity signals, and cold-start modifiers.</p>
+                    <div className="card-meta-row">
+                      <span>★ {res.rating}</span>
+                      <span>•</span>
+                      <span>{res.duration}</span>
+                      <span>•</span>
+                      <span>{res.provider}</span>
                     </div>
-                    <label className="switch" htmlFor="toggleExplain">
-                      <input
-                        type="checkbox"
-                        id="toggleExplain"
-                        checked={explainEnabled}
-                        onChange={(e) => setExplainEnabled(e.target.checked)}
-                      />
-                      <span className="switch-slider round"></span>
-                    </label>
-                  </div>
 
-                  <div className="toggle-card">
-                    <div className="toggle-info">
-                      <div className="toggle-title">Cold-Start Boost</div>
-                      <p className="toggle-desc">Apply exploration bonus to newly cataloged resources to mitigate zero-interaction penalty in collaborative scoring.</p>
+                    <div className="card-actions-row" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="btn-launch-sm"
+                        onClick={() => handleStartLearning(res)}
+                      >
+                        Start Learning ↗
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`btn-icon-subtle ${isSaved ? 'active-save' : ''}`}
+                        onClick={() => toggleSaveResource(res.id, res.title)}
+                        title={isSaved ? "Remove from library" : "Save for later"}
+                      >
+                        {isSaved ? '★ Saved' : '🔖 Save'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`btn-icon-subtle ${isCompleted ? 'active-done' : ''}`}
+                        onClick={() => toggleCompleteResource(res.id, res.title)}
+                        title={isCompleted ? "Completed!" : "Mark completed"}
+                      >
+                        {isCompleted ? '✓ Done' : 'Complete'}
+                      </button>
                     </div>
-                    <label className="switch" htmlFor="toggleColdStart">
-                      <input
-                        type="checkbox"
-                        id="toggleColdStart"
-                        checked={coldStartEnabled}
-                        onChange={(e) => setColdStartEnabled(e.target.checked)}
-                      />
-                      <span className="switch-slider round"></span>
-                    </label>
-                  </div>
-                </div>
-              </div>
-            </section>
+                  </article>
+                )
+              })}
+            </div>
 
-            <section id="recommendations" className="section-recommendations" aria-labelledby="recSectionHeading">
-              <div className="rec-section-header">
+            {/* Quick Profile Summary Banner */}
+            <div className="profile-summary-callout">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '2rem' }}>🎯</span>
                 <div>
-                  <div className="rec-eyebrow-row">
-                    <span className="eyebrow">HYBRID RESULTS</span>
-                    <span className="results-badge">{computedRecommendations.length} courses ranked</span>
-                  </div>
-                  <h3 id="recSectionHeading" className="rec-title">Recommended Learning Resources</h3>
-                  <p className="rec-subtitle">
-                    Dynamically ranked by H = α · CB + (1−α) · CF against live Supabase courses.
+                  <h4 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontWeight: 700 }}>
+                    Target Track: {profile.goal}
+                  </h4>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', marginTop: '0.2rem' }}>
+                    Available: {profile.weeklyTime} • Schedule: {profile.studySchedule} • Hands-on Focus: {preferences.handsOnTheory}%
                   </p>
                 </div>
               </div>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setActiveSection('preferences')}
+                >
+                  Adjust Preferences
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setActiveSection('profile')}
+                >
+                  Edit Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-              <div className="recommendations-grid">
-                {computedRecommendations.map((item, index) => {
-                  const isSaved = interactions.saved.includes(item.id)
-                  const isCompleted = interactions.completed.includes(item.id)
+        {/* ====================================================================
+            SECTION 2: LEARNER PROFILE
+            ==================================================================== */}
+        {activeSection === 'profile' && (
+          <div className="section-container">
+            <div className="form-card">
+              <h3 className="form-card-title">1. Experience Level</h3>
+              <p className="form-card-subtitle">Choose where you are currently starting in your engineering and technical journey.</p>
+              <div className="button-group-row">
+                {['Beginner', 'Intermediate', 'Advanced'].map(lvl => (
+                  <button
+                    key={lvl}
+                    type="button"
+                    className={`btn-choice ${profile.experience === lvl ? 'selected' : ''}`}
+                    onClick={() => setProfile(p => ({ ...p, experience: lvl }))}
+                  >
+                    <div style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.2rem' }}>{lvl}</div>
+                    <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                      {lvl === 'Beginner' && 'Foundational principles and syntax'}
+                      {lvl === 'Intermediate' && 'Hands-on projects and frameworks'}
+                      {lvl === 'Advanced' && 'Distributed systems & optimization'}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
 
+            <div className="form-card">
+              <h3 className="form-card-title">2. Primary Learning Goal</h3>
+              <p className="form-card-subtitle">Select the main milestone you want this platform to guide you towards.</p>
+              <div className="chips-grid">
+                {[
+                  'Learn AI fundamentals',
+                  'Build AI projects',
+                  'Prepare for academic studies',
+                  'Prepare for interviews',
+                  'Career development',
+                  'Career transition',
+                  'Research and specialization'
+                ].map(goal => (
+                  <button
+                    key={goal}
+                    type="button"
+                    className={`chip-toggle ${profile.goal === goal ? 'active' : ''}`}
+                    onClick={() => setProfile(p => ({ ...p, goal }))}
+                  >
+                    <span>{profile.goal === goal ? '✓' : '+'}</span>
+                    <span>{goal}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="form-card">
+              <h3 className="form-card-title">3. Areas of Interest (Select All That Apply)</h3>
+              <p className="form-card-subtitle">Curated subjects that shape your personalized recommendation feed.</p>
+              <div className="chips-grid">
+                {TOPIC_CHIPS.map(topic => {
+                  const isSelected = (profile.interests || []).includes(topic)
                   return (
-                    <article key={item.id || index} className="rec-card">
-                      <div className="rec-card-header">
-                        <div className="rec-type-provider">
-                          <span className="rec-type-pill">{item.type || 'Course'}</span>
-                          <span className="rec-provider">• {item.source || 'Curated'}</span>
-                          {item.difficulty && (
-                            <span className="rec-provider" style={{ color: '#38bdf8' }}>• {item.difficulty}</span>
-                          )}
-                        </div>
-                        <div className="rec-badges-cluster">
-                          {item.isNew && <span className="badge-new">NEW</span>}
-                          <span className="badge-rank-index">#{index + 1}</span>
-                        </div>
-                      </div>
-
-                      <h4 className="rec-title-link">{item.title}</h4>
-                      <p className="rec-description">{item.description || 'Comprehensive learning module curated by LearnIQ recommendation engine.'}</p>
-
-                      <div className="rec-tags">
-                        {item.topic && <span className="rec-tag tag-matched">{item.topic}</span>}
-                        {item.tags && item.tags.split(' ').slice(0, 3).map((tag, tIdx) => (
-                          <span key={tIdx} className="rec-tag">{tag}</span>
-                        ))}
-                      </div>
-
-                      <div className="rec-score-block">
-                        <div className="rec-score-row">
-                          <span className="score-name-label">HYBRID SCORE (H)</span>
-                          <div>
-                            <span className="hybrid-score-number">{item.hybridScore}</span>
-                            <span className="score-max-unit">/100</span>
-                          </div>
-                        </div>
-
-                        <div className="rec-score-bar-track">
-                          <div className="rec-score-bar-cb" style={{ width: `${(item.weightedCb / item.hybridScore) * 100}%` }}></div>
-                          <div className="rec-score-bar-cf" style={{ width: `${(item.weightedCf / item.hybridScore) * 100}%` }}></div>
-                          {item.coldStartBoost > 0 && (
-                            <div className="rec-score-bar-cs" style={{ width: `${(item.coldStartBoost / item.hybridScore) * 100}%` }}></div>
-                          )}
-                        </div>
-
-                        <div className="rec-subscores-grid">
-                          <div className="subscore-item">
-                            <span className="subscore-title">Content (CB)</span>
-                            <div className="subscore-val-row">
-                              <span className="subscore-number subscore-cb-val">{item.cbScore}</span>
-                              <span className="subscore-weighted">× {alpha.toFixed(2)} = {item.weightedCb}</span>
-                            </div>
-                          </div>
-                          <div className="subscore-item">
-                            <span className="subscore-title">Collab (CF)</span>
-                            <div className="subscore-val-row">
-                              <span className="subscore-number subscore-cf-val">{item.cfScore}</span>
-                              <span className="subscore-weighted">× {(1 - alpha).toFixed(2)} = {item.weightedCf}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {explainEnabled && (
-                        <div className="rec-explanation-panel">
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.35rem' }}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <circle cx="12" cy="12" r="10"></circle>
-                              <line x1="12" y1="16" x2="12" y2="12"></line>
-                              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                            <span>Scoring Breakdown</span>
-                          </div>
-                          <p style={{ margin: 0, fontSize: '0.74rem', color: '#cbd5e1' }}>
-                            {item.reason || `Matched on topic "${item.topic || 'AI'}" with ${profile.format || 'preferred'} format boost. Community affinity: ${item.rating || 4.5}★.`}
-                          </p>
-                        </div>
-                      )}
-
-                      <div className="rec-actions">
-                        <a
-                          href={item.url || '#'}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="btn-launch"
-                          onClick={() => handleAction(item, 'Clicked')}
-                        >
-                          <span>Launch Content</span>
-                        </a>
-
-                        <button
-                          type="button"
-                          className={`btn-action-outline ${isSaved ? 'is-saved' : ''}`}
-                          onClick={() => handleAction(item, 'Liked')}
-                        >
-                          <span>{isSaved ? 'Saved' : 'Save'}</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className={`btn-action-outline ${isCompleted ? 'is-completed' : ''}`}
-                          onClick={() => handleAction(item, 'Completed')}
-                        >
-                          <span>{isCompleted ? 'Completed' : 'Mark Done'}</span>
-                        </button>
-                      </div>
-                    </article>
+                    <button
+                      key={topic}
+                      type="button"
+                      className={`chip-toggle ${isSelected ? 'active' : ''}`}
+                      onClick={() => toggleInterest(topic)}
+                    >
+                      <span>{isSelected ? '✓' : '+'}</span>
+                      <span>{topic}</span>
+                    </button>
                   )
                 })}
               </div>
-            </section>
-          </>
+            </div>
+
+            <div className="form-card">
+              <div className="two-col-grid">
+                <div>
+                  <h3 className="form-card-title">4. Preferred Learning Format</h3>
+                  <p className="form-card-subtitle">Primary delivery style for course materials.</p>
+                  <select
+                    className="saas-select"
+                    value={profile.format}
+                    onChange={(e) => setProfile(p => ({ ...p, format: e.target.value }))}
+                  >
+                    <option value="Course">Full Comprehensive Course</option>
+                    <option value="Video">Video Tutorials & Walkthroughs</option>
+                    <option value="Article">Technical Articles & Guides</option>
+                    <option value="Interactive lesson">Interactive Notebooks / Lessons</option>
+                    <option value="Project">Hands-on Capstone Projects</option>
+                    <option value="Mixed">Mixed Media (Any Format)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <h3 className="form-card-title">5. Weekly Available Study Time</h3>
+                  <p className="form-card-subtitle">Pacing calibration for estimated completion dates.</p>
+                  <select
+                    className="saas-select"
+                    value={profile.weeklyTime}
+                    onChange={(e) => setProfile(p => ({ ...p, weeklyTime: e.target.value }))}
+                  >
+                    <option value="1-3 hours">1–3 hours per week (Casual / Light)</option>
+                    <option value="4-6 hours">4–6 hours per week (Standard Pacing)</option>
+                    <option value="7-10 hours">7–10 hours per week (Accelerated)</option>
+                    <option value="10+ hours">10+ hours per week (Intensive Bootcamp)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleResetPreferences}
+              >
+                Reset Profile
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleGenerateRecommendations}
+              >
+                Save Profile &amp; Update Recommendations →
+              </button>
+            </div>
+          </div>
         )}
 
-        {/* FOOTER */}
+        {/* ====================================================================
+            SECTION 3: LEARNING PREFERENCES
+            ==================================================================== */}
+        {activeSection === 'preferences' && (
+          <div className="section-container">
+            <div className="form-card">
+              <h3 className="form-card-title">Hands-on Code vs. Theory Focus</h3>
+              <p className="form-card-subtitle">
+                Calibrate whether recommendations should prioritize practical code implementations or foundational theoretical rigor.
+              </p>
+
+              <div style={{ marginTop: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.5rem' }}>
+                  <span>Theoretical Rigor &amp; Concepts (0%)</span>
+                  <span style={{ color: '#38bdf8', fontWeight: 800 }}>{preferences.handsOnTheory}% Hands-on Code</span>
+                  <span>Pure Projects &amp; Code (100%)</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={preferences.handsOnTheory}
+                  onChange={(e) => setPreferences(p => ({ ...p, handsOnTheory: Number(e.target.value) }))}
+                  className="saas-slider"
+                />
+              </div>
+            </div>
+
+            <div className="form-card">
+              <h3 className="form-card-title">Project-Based vs. Academic Curriculum</h3>
+              <p className="form-card-subtitle">
+                Balance between university-style lecture courses and building portfolio-ready applications.
+              </p>
+
+              <div style={{ marginTop: '1.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 600, color: '#94a3b8', marginBottom: '0.5rem' }}>
+                  <span>Academic Lectures (0%)</span>
+                  <span style={{ color: '#a855f7', fontWeight: 800 }}>{preferences.projectBased}% Portfolio Projects</span>
+                  <span>End-to-End Projects (100%)</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={preferences.projectBased}
+                  onChange={(e) => setPreferences(p => ({ ...p, projectBased: Number(e.target.value) }))}
+                  className="saas-slider slider-purple"
+                />
+              </div>
+            </div>
+
+            <div className="form-card">
+              <h3 className="form-card-title">Content Preferences &amp; Filters</h3>
+              <p className="form-card-subtitle">Fine-tune the scope and attributes of discovery results.</p>
+
+              <div className="toggle-list">
+                <div className="toggle-item">
+                  <div>
+                    <div className="toggle-label">Prioritize Free Resources Only</div>
+                    <div className="toggle-desc">Exclude paid certifications and prioritize open-source, university, and community courses.</div>
+                  </div>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={preferences.freeOnly}
+                      onChange={(e) => setPreferences(p => ({ ...p, freeOnly: e.target.checked }))}
+                    />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+
+                <div className="toggle-item">
+                  <div>
+                    <div className="toggle-label">Certification Track</div>
+                    <div className="toggle-desc">Highlight courses that provide verifiable credentials, certificates, or university credits.</div>
+                  </div>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={preferences.certificationTrack}
+                      onChange={(e) => setPreferences(p => ({ ...p, certificationTrack: e.target.checked }))}
+                    />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+
+                <div className="toggle-item">
+                  <div>
+                    <div className="toggle-label">Adaptive Stretch Challenges</div>
+                    <div className="toggle-desc">Occasionally surface advanced modules slightly beyond your current experience level to accelerate mastery.</div>
+                  </div>
+                  <label className="switch">
+                    <input
+                      type="checkbox"
+                      checked={preferences.adaptiveDifficulty}
+                      onChange={(e) => setPreferences(p => ({ ...p, adaptiveDifficulty: e.target.checked }))}
+                    />
+                    <span className="slider round"></span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleResetPreferences}
+              >
+                Reset Dials
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={handleGenerateRecommendations}
+              >
+                Apply Preferences &amp; Update Recommendations →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            SECTION 4: LEARNING ACTIVITY
+            ==================================================================== */}
+        {activeSection === 'activity' && (
+          <div className="section-container">
+            {/* Interactive Activity Signals Dashboard */}
+            <div className="activity-stepper-grid">
+              <div className="stepper-card">
+                <div className="stepper-title">Completed Modules</div>
+                <div className="stepper-value-row">
+                  <button
+                    type="button"
+                    className="stepper-btn"
+                    onClick={() => setActivity(p => ({ ...p, completedIds: p.completedIds.slice(0, -1) }))}
+                  >
+                    -
+                  </button>
+                  <span className="stepper-number text-emerald">{activity.completedIds.length}</span>
+                  <button
+                    type="button"
+                    className="stepper-btn"
+                    onClick={() => {
+                      const unused = allResources.find(r => !activity.completedIds.includes(r.id))
+                      if (unused) toggleCompleteResource(unused.id, unused.title)
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+                <span className="stepper-subtext">Verified completions</span>
+              </div>
+
+              <div className="stepper-card">
+                <div className="stepper-title">Saved Library Items</div>
+                <div className="stepper-value-row">
+                  <button
+                    type="button"
+                    className="stepper-btn"
+                    onClick={() => setActivity(p => ({ ...p, savedIds: p.savedIds.slice(0, -1) }))}
+                  >
+                    -
+                  </button>
+                  <span className="stepper-number text-blue">{activity.savedIds.length}</span>
+                  <button
+                    type="button"
+                    className="stepper-btn"
+                    onClick={() => {
+                      const unused = allResources.find(r => !activity.savedIds.includes(r.id))
+                      if (unused) toggleSaveResource(unused.id, unused.title)
+                    }}
+                  >
+                    +
+                  </button>
+                </div>
+                <span className="stepper-subtext">Wishlist bookmarks</span>
+              </div>
+
+              <div className="stepper-card">
+                <div className="stepper-title">Courses Rated</div>
+                <div className="stepper-value-row">
+                  <span className="stepper-number text-amber">{Object.keys(activity.ratings).length}</span>
+                </div>
+                <span className="stepper-subtext">Feedback signals recorded</span>
+              </div>
+
+              <div className="stepper-card">
+                <div className="stepper-title">Total Study Sessions</div>
+                <div className="stepper-value-row">
+                  <button
+                    type="button"
+                    className="stepper-btn"
+                    onClick={() => setActivity(p => ({ ...p, sessionsCount: Math.max(1, p.sessionsCount - 1) }))}
+                  >
+                    -
+                  </button>
+                  <span className="stepper-number text-purple">{activity.sessionsCount}</span>
+                  <button
+                    type="button"
+                    className="stepper-btn"
+                    onClick={() => setActivity(p => ({ ...p, sessionsCount: p.sessionsCount + 1 }))}
+                  >
+                    +
+                  </button>
+                </div>
+                <span className="stepper-subtext">Recorded platform sessions</span>
+              </div>
+            </div>
+
+            {/* Timeline of Recent Activity */}
+            <div className="form-card" style={{ marginTop: '1.5rem' }}>
+              <h3 className="form-card-title">Recent Learning Sessions &amp; Milestones</h3>
+              <p className="form-card-subtitle">Live log of your activity and actions recorded across LearnIQ.</p>
+
+              <div className="timeline-container">
+                {activity.recentEvents.map((evt) => (
+                  <div key={evt.id} className="timeline-event">
+                    <div className="timeline-icon-circle">{evt.icon}</div>
+                    <div className="timeline-body">
+                      <div className="timeline-title">{evt.title}</div>
+                      <div className="timeline-time">{evt.time}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            SECTION 5: RECOMMENDATIONS WORKSPACE
+            ==================================================================== */}
+        {activeSection === 'recommendations' && (
+          <div className="section-container" id="recommendationsWorkspace">
+            {/* Control & Filter Toolbar */}
+            <div className="catalog-toolbar">
+              <div className="catalog-search-row">
+                <div className="search-box">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search by topic, instructor, framework, or skill..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button type="button" className="search-clear-btn" onClick={() => setSearchQuery('')}>×</button>
+                  )}
+                </div>
+
+                {/* Filter: Topic */}
+                <div className="select-wrapper">
+                  <select
+                    className="form-select"
+                    value={selectedTopic}
+                    onChange={(e) => setSelectedTopic(e.target.value)}
+                  >
+                    <option value="all">All Topics</option>
+                    <option value="Machine Learning">Machine Learning</option>
+                    <option value="Generative AI">Generative AI</option>
+                    <option value="Python">Python</option>
+                    <option value="Deep Learning">Deep Learning</option>
+                    <option value="Natural Language Processing">NLP</option>
+                    <option value="Computer Vision">Computer Vision</option>
+                    <option value="MLOps">MLOps</option>
+                    <option value="AI Agents">AI Agents</option>
+                    <option value="Data Science">Data Science</option>
+                    <option value="Cloud Computing">Cloud Computing</option>
+                  </select>
+                </div>
+
+                {/* Filter: Difficulty */}
+                <div className="select-wrapper">
+                  <select
+                    className="form-select"
+                    value={selectedDifficulty}
+                    onChange={(e) => setSelectedDifficulty(e.target.value)}
+                  >
+                    <option value="all">All Levels</option>
+                    <option value="Beginner">Beginner</option>
+                    <option value="Intermediate">Intermediate</option>
+                    <option value="Advanced">Advanced</option>
+                  </select>
+                </div>
+
+                {/* Filter: Format */}
+                <div className="select-wrapper">
+                  <select
+                    className="form-select"
+                    value={selectedFormat}
+                    onChange={(e) => setSelectedFormat(e.target.value)}
+                  >
+                    <option value="all">All Formats</option>
+                    <option value="Course">Full Courses</option>
+                    <option value="Video">Video Lessons</option>
+                    <option value="Interactive lesson">Interactive</option>
+                    <option value="Project">Capstone Projects</option>
+                    <option value="Tutorial">Tutorials</option>
+                    <option value="Article">Technical Articles</option>
+                  </select>
+                </div>
+
+                {/* Filter: Sort By */}
+                <div className="select-wrapper">
+                  <select
+                    className="form-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="relevance">Sort: Most Relevant</option>
+                    <option value="rating">Sort: Highest Rated</option>
+                    <option value="duration">Sort: Shortest Duration</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Sub-filters and results summary */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  <button
+                    type="button"
+                    className={`filter-pill ${selectedPricing === 'all' ? 'active' : ''}`}
+                    onClick={() => setSelectedPricing('all')}
+                  >
+                    All Pricing
+                  </button>
+                  <button
+                    type="button"
+                    className={`filter-pill ${selectedPricing === 'free' ? 'active' : ''}`}
+                    onClick={() => setSelectedPricing('free')}
+                  >
+                    Free Only
+                  </button>
+                  <span style={{ fontSize: '0.78rem', color: '#94a3b8', marginLeft: '0.5rem' }}>
+                    Showing <strong>{displayedRecommendations.length}</strong> personalized resources
+                  </span>
+                </div>
+
+                {(selectedTopic !== 'all' || selectedDifficulty !== 'all' || selectedFormat !== 'all' || selectedPricing !== 'all' || searchQuery) && (
+                  <button
+                    type="button"
+                    className="btn-action-outline"
+                    style={{ fontSize: '0.72rem', padding: '0.25rem 0.65rem' }}
+                    onClick={() => {
+                      setSelectedTopic('all')
+                      setSelectedDifficulty('all')
+                      setSelectedFormat('all')
+                      setSelectedPricing('all')
+                      setSearchQuery('')
+                    }}
+                  >
+                    Clear All Filters
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Recommendations Grid */}
+            <div className="recommendations-grid" style={{ marginTop: '1.5rem' }}>
+              {displayedRecommendations.map((res) => {
+                const isSaved = activity.savedIds.includes(res.id)
+                const isCompleted = activity.completedIds.includes(res.id)
+                const currentRating = activity.ratings[res.id] || 0
+
+                return (
+                  <article key={res.id} className="saas-card" onClick={() => setModalResource(res)}>
+                    <div className="saas-card-header">
+                      <div className="card-badge-row">
+                        <span className="badge-pill badge-type">{res.type}</span>
+                        <span className="badge-pill badge-level">{res.difficulty}</span>
+                        <span className="badge-pill badge-topic">{res.topic}</span>
+                        {res.isFree && <span className="badge-pill badge-free">Free</span>}
+                      </div>
+                      <span className="card-match-badge">{res.relevanceScore}% Match</span>
+                    </div>
+
+                    <h4 className="card-title">{res.title}</h4>
+                    <p className="card-desc">{res.description}</p>
+
+                    {/* Explanatory "Why this is recommended" component */}
+                    <div className="why-recommended-box">
+                      <span className="why-icon">💡</span>
+                      <span>{res.whyRecommended}</span>
+                    </div>
+
+                    <div className="card-meta-row">
+                      <span>★ {res.rating}</span>
+                      <span>•</span>
+                      <span>{res.duration}</span>
+                      <span>•</span>
+                      <span>{res.provider}</span>
+                      <span>•</span>
+                      <span>{res.learnerCount}</span>
+                    </div>
+
+                    <div className="card-tags-row">
+                      {(res.tags || []).slice(0, 3).map((tag, tIdx) => (
+                        <span key={tIdx} className="card-tag">{tag}</span>
+                      ))}
+                    </div>
+
+                    <div className="card-actions-row" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="btn-launch-sm"
+                        onClick={() => handleStartLearning(res)}
+                      >
+                        Start Learning ↗
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`btn-icon-subtle ${isSaved ? 'active-save' : ''}`}
+                        onClick={() => toggleSaveResource(res.id, res.title)}
+                        title={isSaved ? "Remove from saved library" : "Save for later"}
+                      >
+                        {isSaved ? '★ Saved' : '🔖 Save'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`btn-icon-subtle ${isCompleted ? 'active-done' : ''}`}
+                        onClick={() => toggleCompleteResource(res.id, res.title)}
+                        title={isCompleted ? "Marked as completed" : "Mark as completed"}
+                      >
+                        {isCompleted ? '✓ Done' : 'Complete'}
+                      </button>
+
+                      {/* Interactive 5-star rating */}
+                      <div className="star-rating-row" title="Rate this resource">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span
+                            key={star}
+                            className={`star-char ${currentRating >= star ? 'star-filled' : ''}`}
+                            onClick={() => handleRateResource(res.id, star)}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+
+            {/* Empty State when zero results match filters */}
+            {displayedRecommendations.length === 0 && (
+              <div className="empty-state-card">
+                <div className="empty-icon">🔍</div>
+                <h3>No Matching Recommendations</h3>
+                <p>No learning resources found matching your active filter criteria. Try broadening your topic or difficulty filters.</p>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    setSelectedTopic('all')
+                    setSelectedDifficulty('all')
+                    setSelectedFormat('all')
+                    setSelectedPricing('all')
+                    setSearchQuery('')
+                  }}
+                >
+                  Reset Filters
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ====================================================================
+            SECTION 6: SAVED RESOURCES LIBRARY
+            ==================================================================== */}
+        {activeSection === 'saved' && (
+          <div className="section-container">
+            <div className="section-header-row">
+              <div>
+                <h3 className="section-title">Your Saved Library ({savedResourcesList.length})</h3>
+                <p className="section-subtitle">Resources bookmarked to explore, practice, or reference later.</p>
+              </div>
+            </div>
+
+            {savedResourcesList.length > 0 ? (
+              <div className="recommendations-grid">
+                {savedResourcesList.map(res => (
+                  <article key={res.id} className="saas-card" onClick={() => setModalResource(res)}>
+                    <div className="saas-card-header">
+                      <div className="card-badge-row">
+                        <span className="badge-pill badge-type">{res.type}</span>
+                        <span className="badge-pill badge-level">{res.difficulty}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-icon-subtle active-save"
+                        onClick={(e) => { e.stopPropagation(); toggleSaveResource(res.id, res.title); }}
+                        title="Remove bookmark"
+                      >
+                        ✕ Remove
+                      </button>
+                    </div>
+
+                    <h4 className="card-title">{res.title}</h4>
+                    <p className="card-desc">{res.description}</p>
+
+                    <div className="card-meta-row">
+                      <span>★ {res.rating}</span>
+                      <span>•</span>
+                      <span>{res.duration}</span>
+                      <span>•</span>
+                      <span>{res.provider}</span>
+                    </div>
+
+                    <div className="card-actions-row" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        type="button"
+                        className="btn-launch-sm"
+                        onClick={() => handleStartLearning(res)}
+                      >
+                        Launch Content ↗
+                      </button>
+                      <button
+                        type="button"
+                        className={`btn-icon-subtle ${activity.completedIds.includes(res.id) ? 'active-done' : ''}`}
+                        onClick={() => toggleCompleteResource(res.id, res.title)}
+                      >
+                        {activity.completedIds.includes(res.id) ? '✓ Completed' : 'Mark Done'}
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              /* Empty State (Required in Section 16) */
+              <div className="empty-state-card">
+                <div className="empty-icon">🔖</div>
+                <h3>No saved resources yet</h3>
+                <p>Save learning resources you want to explore later by clicking the bookmark button on any recommendation card.</p>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setActiveSection('recommendations')}
+                >
+                  Explore Recommendations →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ====================================================================
+            SECTION 7: PROGRESS DASHBOARD
+            ==================================================================== */}
+        {activeSection === 'progress' && (
+          <div className="section-container">
+            {/* Overall Progress Stat Banners */}
+            <div className="form-card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <div>
+                  <h3 className="form-card-title" style={{ margin: 0 }}>Overall Milestone Progress</h3>
+                  <p className="form-card-subtitle" style={{ margin: 0, marginTop: '0.2rem' }}>
+                    Track your journey toward mastering <strong>{profile.goal}</strong>.
+                  </p>
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#10b981' }}>
+                  {activity.completedIds.length} / 12 Completed ({Math.min(100, Math.round((activity.completedIds.length / 12) * 100))}%)
+                </div>
+              </div>
+
+              <div className="roadmap-progress-bar-container" style={{ height: '12px' }}>
+                <div
+                  className="roadmap-progress-bar-fill"
+                  style={{ width: `${Math.min(100, Math.round((activity.completedIds.length / 12) * 100))}%` }}
+                />
+              </div>
+
+              <div className="progress-highlights-grid">
+                <div className="progress-stat-box">
+                  <div className="stat-label">Hours Invested</div>
+                  <div className="stat-value">{activity.hoursSpent} hrs</div>
+                  <div className="stat-sub">Across {activity.sessionsCount} study sessions</div>
+                </div>
+
+                <div className="progress-stat-box">
+                  <div className="stat-label">Continuous Streak</div>
+                  <div className="stat-value">{activity.streakDays} Days 🔥</div>
+                  <div className="stat-sub">Goal: 7 days target</div>
+                </div>
+
+                <div className="progress-stat-box">
+                  <div className="stat-label">Verified Modules</div>
+                  <div className="stat-value">{activity.completedIds.length} Finished</div>
+                  <div className="stat-sub">{activity.savedIds.length} Bookmarked</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Topic Mastery Progress Bars */}
+            <div className="form-card" style={{ marginTop: '1.5rem' }}>
+              <h3 className="form-card-title">Subject Mastery Breakdown</h3>
+              <p className="form-card-subtitle">Estimated proficiency based on completed exercises and topics.</p>
+
+              <div className="topic-mastery-list">
+                {[
+                  { topic: 'Machine Learning', progress: 75, color: '#38bdf8' },
+                  { topic: 'Generative AI & LLMs', progress: 60, color: '#a855f7' },
+                  { topic: 'Python Programming', progress: 90, color: '#10b981' },
+                  { topic: 'Deep Learning & PyTorch', progress: 45, color: '#f59e0b' },
+                  { topic: 'MLOps & Deployment', progress: 30, color: '#06b6d4' }
+                ].map(item => (
+                  <div key={item.topic} className="topic-mastery-row">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 600, color: '#fff', marginBottom: '0.35rem' }}>
+                      <span>{item.topic}</span>
+                      <span style={{ color: item.color }}>{item.progress}% Mastery</span>
+                    </div>
+                    <div className="topic-bar-track">
+                      <div className="topic-bar-fill" style={{ width: `${item.progress}%`, background: item.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ====================================================================
+            SECTION 8: SETTINGS
+            ==================================================================== */}
+        {activeSection === 'settings' && (
+          <div className="section-container">
+            <div className="form-card">
+              <h3 className="form-card-title">Scholar Account Profile</h3>
+              <p className="form-card-subtitle">Manage your local profile details and display credentials.</p>
+
+              <div className="two-col-grid" style={{ marginTop: '1.25rem' }}>
+                <div>
+                  <label className="auth-label">Full Name</label>
+                  <input
+                    type="text"
+                    className="auth-input"
+                    value={profile.name}
+                    onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <label className="auth-label">Academic Role / Title</label>
+                  <input
+                    type="text"
+                    className="auth-input"
+                    value={profile.role}
+                    onChange={(e) => setProfile(p => ({ ...p, role: e.target.value }))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-card" style={{ borderColor: 'rgba(239, 68, 68, 0.3)' }}>
+              <h3 className="form-card-title" style={{ color: '#f87171' }}>Reset &amp; Danger Zone</h3>
+              <p className="form-card-subtitle">
+                Clear all custom preferences, bookmarked resources, and activity logs to restore initial prototype defaults.
+              </p>
+
+              <div style={{ marginTop: '1.25rem' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                  onClick={handleResetPreferences}
+                >
+                  Reset All Settings to Factory Demo Defaults
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* --------------------------------------------------------------------
+            3. FOOTER
+            -------------------------------------------------------------------- */}
         <footer className="app-footer">
           <div className="footer-content">
             <div className="footer-left">
-              <span className="brand-subtext"><strong>LearnIQ</strong> — Enterprise Adaptive AI Learning Platform</span>
+              <span className="brand-subtext"><strong>LearnIQ</strong> — Personalized Learning Platform</span>
               <span className="footer-dot">•</span>
-              <span>FastAPI &amp; Render Cloud</span>
+              <span>EdTech SaaS Prototype</span>
               <span className="footer-dot">•</span>
-              <span>Supabase PostgreSQL DB</span>
+              <span>Intelligent Resource Recommendations</span>
             </div>
             <div className="footer-right">
-              <span>{platformMode === 'learner' ? 'Empowering 300+ Tech Learners' : 'Formulation: H = α · CB + (1 − α) · CF'}</span>
+              <span>{allResources.length} Curated Technical Modules</span>
             </div>
           </div>
         </footer>
       </main>
 
-      {/* STUDENT REGISTRATION / LOGIN MODAL */}
-      {authModalOpen && (
-        <div className="auth-modal-overlay" onClick={() => setAuthModalOpen(false)}>
-          <div className="auth-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+      {/* --------------------------------------------------------------------
+          4. RESOURCE DETAILS MODAL (As required in Section 15)
+          -------------------------------------------------------------------- */}
+      {modalResource && (
+        <div className="modal-overlay" onClick={() => setModalResource(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <div className="card-badge-row">
+                <span className="badge-pill badge-type">{modalResource.type}</span>
+                <span className="badge-pill badge-level">{modalResource.difficulty}</span>
+                <span className="badge-pill badge-topic">{modalResource.topic}</span>
+                <span className="card-match-badge">{modalResource.relevanceScore}% Match</span>
+              </div>
+              <button type="button" className="modal-close-btn" onClick={() => setModalResource(null)}>×</button>
+            </div>
+
+            <h2 className="modal-title">{modalResource.title}</h2>
+            <div className="modal-provider-row">
+              <span>Offered by <strong>{modalResource.provider}</strong></span>
+              <span>•</span>
+              <span>Duration: <strong>{modalResource.duration}</strong></span>
+              <span>•</span>
+              <span>Rating: <strong>★ {modalResource.rating}</strong></span>
+            </div>
+
+            <p className="modal-desc">{modalResource.description}</p>
+
+            {/* Why Recommended in modal */}
+            <div className="why-recommended-box" style={{ margin: '1.25rem 0' }}>
+              <span className="why-icon">💡</span>
               <div>
-                <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff' }}>
-                  {authTab === 'login' ? 'Student Sign In' : 'Create Free Student Account'}
-                </h3>
-                <p style={{ fontSize: '0.8rem', color: '#94a3b8', margin: 0 }}>
-                  Save your learning trajectory and dynamic roadmap across sessions.
-                </p>
+                <strong style={{ display: 'block', fontSize: '0.78rem', color: '#fff', marginBottom: '0.15rem' }}>
+                  Why this is recommended for you:
+                </strong>
+                <span>{modalResource.whyRecommended}</span>
               </div>
-              <button
-                type="button"
-                style={{ color: '#94a3b8', fontSize: '1.5rem', background: 'none', border: 'none', cursor: 'pointer' }}
-                onClick={() => setAuthModalOpen(false)}
-              >
-                ×
-              </button>
             </div>
 
-            {/* Instant Demo Scholar Access Button */}
-            <div className="demo-login-callout" onClick={handleInstantDemoLogin}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div className="demo-bolt-circle">⚡</div>
-                <div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>
-                    1-Click Demo Student Access
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                    Explore immediately as Alex Morgan (Verified Scholar) — no signup required
-                  </div>
-                </div>
-              </div>
-              <span style={{ fontSize: '0.8rem', color: '#38bdf8', fontWeight: 700 }}>Enter →</span>
-            </div>
+            <div className="modal-section-title">Key Learning Outcomes</div>
+            <ul className="modal-outcomes-list">
+              {(modalResource.outcomes || [
+                'Master theoretical and applied foundations in this domain.',
+                'Build hands-on code examples and portfolio projects.',
+                'Follow industry best practices for implementation and performance.'
+              ]).map((out, idx) => (
+                <li key={idx}>{out}</li>
+              ))}
+            </ul>
 
-            <div className="auth-divider"><span>OR CONTINUE WITH YOUR ACCOUNT</span></div>
+            <div className="modal-section-title" style={{ marginTop: '1rem' }}>Prerequisites</div>
+            <p style={{ fontSize: '0.82rem', color: '#94a3b8', margin: 0 }}>
+              {modalResource.prerequisites || 'Basic familiarity with computer science concepts and Python programming.'}
+            </p>
 
-            <div className="auth-tabs">
+            <div className="modal-actions-footer">
               <button
                 type="button"
-                className={`auth-tab ${authTab === 'login' ? 'active' : ''}`}
-                onClick={() => setAuthTab('login')}
+                className="btn btn-secondary"
+                onClick={() => {
+                  toggleSaveResource(modalResource.id, modalResource.title)
+                }}
               >
-                Sign In
+                {activity.savedIds.includes(modalResource.id) ? '★ Saved in Library' : '🔖 Bookmark Resource'}
               </button>
+
               <button
                 type="button"
-                className={`auth-tab ${authTab === 'register' ? 'active' : ''}`}
-                onClick={() => setAuthTab('register')}
+                className="btn btn-primary"
+                onClick={() => {
+                  handleStartLearning(modalResource)
+                  setModalResource(null)
+                }}
               >
-                Register
+                Start Learning Now ↗
               </button>
             </div>
-
-            <form onSubmit={handleAuthSubmit}>
-              {authTab === 'register' && (
-                <div className="auth-form-group">
-                  <label>Full Name</label>
-                  <input
-                    type="text"
-                    className="auth-input"
-                    placeholder="e.g. Alan Somi"
-                    value={authFullName}
-                    onChange={(e) => setAuthFullName(e.target.value)}
-                    required
-                  />
-                </div>
-              )}
-
-              <div className="auth-form-group">
-                <label>Username</label>
-                <input
-                  type="text"
-                  className="auth-input"
-                  placeholder="e.g. alansomi"
-                  value={authUsername}
-                  onChange={(e) => setAuthUsername(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="auth-form-group">
-                <label>Password</label>
-                <input
-                  type="password"
-                  className="auth-input"
-                  placeholder="••••••••"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  required
-                />
-              </div>
-
-              <button type="submit" className="auth-submit-btn">
-                {authTab === 'login' ? 'Sign In to My Account' : 'Register & Start Clean'}
-              </button>
-
-              <div style={{ textAlign: 'center', marginTop: '1rem', fontSize: '0.75rem', color: '#64748b' }}>
-                {authTab === 'login' ? (
-                  <span>Don't have an account? <strong style={{ color: '#38bdf8', cursor: 'pointer' }} onClick={() => setAuthTab('register')}>Register now</strong></span>
-                ) : (
-                  <span>Already registered? <strong style={{ color: '#38bdf8', cursor: 'pointer' }} onClick={() => setAuthTab('login')}>Sign In</strong></span>
-                )}
-              </div>
-            </form>
           </div>
         </div>
       )}
 
-      {/* Toast Notification Container */}
+      {/* Toast Notifications */}
       <div className="toast-container" aria-live="polite">
         {toasts.map(t => (
           <div key={t.id} className="toast-item">
