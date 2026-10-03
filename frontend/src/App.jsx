@@ -366,6 +366,44 @@ function getActiveSessionUsername() {
   }
 }
 
+let toastCounter = 0
+function getNextToastId() {
+  return ++toastCounter
+}
+
+function getEventTimestamp() {
+  return Date.now()
+}
+
+function normalizeTags(tags) {
+  if (Array.isArray(tags)) return tags.filter(Boolean)
+  if (typeof tags === 'string') return tags.trim().split(/\s+/).filter(Boolean)
+  return []
+}
+
+function getInitials(name, fallback = 'LQ') {
+  const cleanName = (name || '').trim()
+  if (!cleanName) return fallback
+  const parts = cleanName.split(/\s+/).filter(Boolean)
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+  }
+  return cleanName.slice(0, 2).toUpperCase()
+}
+
+function normalizeActivity(act) {
+  const a = act || {}
+  return {
+    completedIds: Array.isArray(a.completedIds) ? a.completedIds : [],
+    savedIds: Array.isArray(a.savedIds) ? a.savedIds : [],
+    ratings: (a.ratings && typeof a.ratings === 'object') ? a.ratings : {},
+    sessionsCount: typeof a.sessionsCount === 'number' ? a.sessionsCount : 0,
+    streakDays: typeof a.streakDays === 'number' ? a.streakDays : 0,
+    hoursSpent: typeof a.hoursSpent === 'number' ? a.hoursSpent : 0,
+    recentEvents: Array.isArray(a.recentEvents) ? a.recentEvents : []
+  }
+}
+
 export default function App() {
   // ------------------------------------------------------------------------
   // Active User & Authentication State (Default: Clean Guest, No Demo Account)
@@ -439,7 +477,7 @@ export default function App() {
   // ------------------------------------------------------------------------
   const [activity, setActivity] = useState(() => {
     if (currentUser && currentUser.activity) {
-      return currentUser.activity
+      return normalizeActivity(currentUser.activity)
     }
     return {
       completedIds: [],
@@ -487,6 +525,7 @@ export default function App() {
     if (currentUser && currentUser.username) {
       const accounts = getStoredAccounts()
       if (accounts[currentUser.username]) {
+        accounts[currentUser.username].name = currentUser.name || profile.name
         accounts[currentUser.username].profile = profile
         accounts[currentUser.username].preferences = preferences
         accounts[currentUser.username].activity = activity
@@ -499,13 +538,11 @@ export default function App() {
 
   // Toast Trigger Helper
   const showToast = (message, type = 'info') => {
-    setToasts(prev => {
-      const id = (prev.length > 0 ? prev[prev.length - 1].id + 1 : 1)
-      setTimeout(() => {
-        setToasts(curr => curr.filter(t => t.id !== id))
-      }, 3500)
-      return [...prev, { id, message, type }]
-    })
+    const id = getNextToastId()
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => {
+      setToasts(curr => curr.filter(t => t.id !== id))
+    }, 3500)
   }
 
   // ------------------------------------------------------------------------
@@ -522,17 +559,19 @@ export default function App() {
         clearTimeout(timer)
         setCloudWakingUp(false)
         if (Array.isArray(data) && data.length > 0) {
-          const transformed = data.map(item => ({
+          const transformed = data.filter(Boolean).map(item => ({
             id: `cloud-${item.id}`,
             title: item.title,
-            provider: item.instructor ? `${item.instructor} (${item.platform || 'Online'})` : (item.platform || 'Online Academy'),
+            provider: item.source || item.instructor || 'Online Academy',
             type: item.type || 'Course',
             topic: item.topic || 'Machine Learning',
             difficulty: item.difficulty || 'Intermediate',
             duration: item.duration || '6 hours',
             rating: item.rating ? Number(item.rating) : 4.8,
             learnerCount: `${Math.floor(12 + Math.random() * 85)}k learners`,
-            tags: [item.topic || 'Machine Learning', item.difficulty || 'Intermediate', 'Verified Course'],
+            tags: normalizeTags(item.tags).length > 0
+              ? normalizeTags(item.tags)
+              : [item.topic || 'Machine Learning', item.difficulty || 'Intermediate', 'Verified Course'],
             url: item.url || 'https://www.coursera.org',
             description: item.description || `Comprehensive curriculum designed to build practical mastery in ${item.topic || 'this subject'}.`,
             outcomes: [
@@ -549,6 +588,8 @@ export default function App() {
         }
       })
       .catch(() => {
+        clearTimeout(timer)
+        setCloudWakingUp(false)
         // Cold start or offline: Seamless local fallback
         setCloudConnected(false)
       })
@@ -558,7 +599,7 @@ export default function App() {
   // Combined Catalog
   const allResources = useMemo(() => {
     if (cloudConnected && cloudCatalog.length > 0) {
-      const extraCloud = cloudCatalog.filter(c => !DEMO_CATALOG.some(d => d.title.toLowerCase() === c.title.toLowerCase()))
+      const extraCloud = cloudCatalog.filter(c => !DEMO_CATALOG.some(d => (d.title || '').toLowerCase() === (c.title || '').toLowerCase()))
       return [...DEMO_CATALOG, ...extraCloud]
     }
     return DEMO_CATALOG
@@ -613,7 +654,7 @@ export default function App() {
         streakDays: 1,
         hoursSpent: 0,
         recentEvents: [
-          { id: Date.now(), title: 'Registered LearnIQ Learner Account', time: 'Just now', icon: '👤' }
+          { id: getEventTimestamp(), title: 'Registered LearnIQ Learner Account', time: 'Just now', icon: '👤' }
         ]
       },
       activeCourse: null
@@ -678,7 +719,7 @@ export default function App() {
       freeOnly: false,
       certificationTrack: true
     })
-    setActivity(account.activity || {
+    setActivity(normalizeActivity(account.activity || {
       completedIds: [],
       savedIds: [],
       ratings: {},
@@ -686,7 +727,7 @@ export default function App() {
       streakDays: 1,
       hoursSpent: 0,
       recentEvents: []
-    })
+    }))
     setActiveCourse(account.activeCourse || null)
     setTargetSkill(account.targetSkill || account.profile?.targetSkill || '')
     setAuthModalOpen(false)
@@ -732,9 +773,9 @@ export default function App() {
 
     // Filter matching resources
     let matches = allResources.filter(r =>
-      r.title.toLowerCase().includes(skill) ||
-      r.topic.toLowerCase().includes(skill) ||
-      (r.tags && r.tags.some(t => t.toLowerCase().includes(skill)))
+      (r.title || '').toLowerCase().includes(skill) ||
+      (r.topic || '').toLowerCase().includes(skill) ||
+      normalizeTags(r.tags).some(t => (t || '').toLowerCase().includes(skill))
     )
 
     if (matches.length < 4) {
@@ -746,7 +787,10 @@ export default function App() {
     const s1 = matches.filter(r => r.difficulty === 'Beginner').slice(0, 2)
     const s2 = matches.filter(r => r.difficulty === 'Intermediate' && r.type !== 'Project' && !s1.some(x => x.id === r.id)).slice(0, 2)
     const s3 = matches.filter(r => r.difficulty === 'Advanced' && r.type !== 'Project' && !s1.concat(s2).some(x => x.id === r.id)).slice(0, 2)
-    const s4 = matches.filter(r => (r.type === 'Project' || (r.tags && r.tags.some(t => t.toLowerCase().includes('project') || t.toLowerCase().includes('capstone')))) && !s1.concat(s2, s3).some(x => x.id === r.id)).slice(0, 2)
+    const s4 = matches.filter(r => (r.type === 'Project' || normalizeTags(r.tags).some(t => {
+      const tagStr = (t || '').toLowerCase()
+      return tagStr.includes('project') || tagStr.includes('capstone')
+    })) && !s1.concat(s2, s3).some(x => x.id === r.id)).slice(0, 2)
 
     const pool = matches.filter(r => !new Set([...s1, ...s2, ...s3, ...s4].map(x => x.id)).has(r.id))
     const fill = (arr, count = 2) => {
@@ -795,7 +839,7 @@ export default function App() {
   }, [roadmapStages])
 
   const roadmapCompletedCoursesCount = useMemo(() => {
-    return roadmapCoursesList.filter(c => activity.completedIds.includes(c.id)).length
+    return roadmapCoursesList.filter(c => (activity.completedIds || []).includes(c.id)).length
   }, [roadmapCoursesList, activity.completedIds])
 
   const roadmapTotalCoursesCount = roadmapCoursesList.length || 7
@@ -806,7 +850,7 @@ export default function App() {
   }, [roadmapCompletedCoursesCount, roadmapTotalCoursesCount])
 
   const handleSetTargetSkill = (newSkill) => {
-    const s = newSkill.trim()
+    const s = (newSkill || '').trim()
     setTargetSkill(s)
     setProfile(p => ({
       ...p,
@@ -821,7 +865,7 @@ export default function App() {
   // DETERMINISTIC PERSONALIZATION & RELEVANCE LOGIC (NO MATH JARGON!)
   // ------------------------------------------------------------------------
   const scoredResources = useMemo(() => {
-    const userInterests = (profile.interests || []).map(i => i.toLowerCase())
+    const userInterests = (profile.interests || []).map(i => (i || '').toLowerCase())
     const userGoal = (profile.goal || '').toLowerCase()
     const userExp = (profile.experience || 'Beginner').toLowerCase()
     const userFormat = (profile.format || 'Course').toLowerCase()
@@ -867,7 +911,7 @@ export default function App() {
       }
 
       // Goal Alignment
-      if (userGoal.includes('project') && (resource.tags || []).some(t => t.toLowerCase().includes('project'))) {
+      if (userGoal.includes('project') && normalizeTags(resource.tags).some(t => (t || '').toLowerCase().includes('project'))) {
         relevanceScore += 5
         reasons.push(`Supports your goal: "${profile.goal}"`)
       }
@@ -889,26 +933,26 @@ export default function App() {
   const displayedRecommendations = useMemo(() => {
     let list = [...scoredResources]
 
-    if (searchQuery.trim()) {
+    if ((searchQuery || '').trim()) {
       const q = searchQuery.toLowerCase()
       list = list.filter(r =>
-        r.title.toLowerCase().includes(q) ||
-        r.topic.toLowerCase().includes(q) ||
-        r.provider.toLowerCase().includes(q) ||
-        (r.tags && r.tags.some(t => t.toLowerCase().includes(q)))
+        (r.title || '').toLowerCase().includes(q) ||
+        (r.topic || '').toLowerCase().includes(q) ||
+        (r.provider || '').toLowerCase().includes(q) ||
+        normalizeTags(r.tags).some(t => (t || '').toLowerCase().includes(q))
       )
     }
 
     if (selectedTopic !== 'all') {
-      list = list.filter(r => r.topic.toLowerCase() === selectedTopic.toLowerCase())
+      list = list.filter(r => (r.topic || '').toLowerCase() === (selectedTopic || '').toLowerCase())
     }
 
     if (selectedDifficulty !== 'all') {
-      list = list.filter(r => r.difficulty.toLowerCase() === selectedDifficulty.toLowerCase())
+      list = list.filter(r => (r.difficulty || '').toLowerCase() === (selectedDifficulty || '').toLowerCase())
     }
 
     if (selectedFormat !== 'all') {
-      list = list.filter(r => r.type.toLowerCase() === selectedFormat.toLowerCase())
+      list = list.filter(r => (r.type || '').toLowerCase() === (selectedFormat || '').toLowerCase())
     }
 
     if (selectedPricing === 'free') {
@@ -920,7 +964,7 @@ export default function App() {
     } else if (sortBy === 'rating') {
       list.sort((a, b) => b.rating - a.rating)
     } else if (sortBy === 'duration') {
-      list.sort((a, b) => parseInt(a.duration) - parseInt(b.duration))
+      list.sort((a, b) => parseInt(a.duration || '0') - parseInt(b.duration || '0'))
     }
 
     return list
@@ -928,7 +972,7 @@ export default function App() {
 
   // Saved resources list
   const savedResourcesList = useMemo(() => {
-    return allResources.filter(r => activity.savedIds.includes(r.id))
+    return allResources.filter(r => (activity.savedIds || []).includes(r.id))
   }, [allResources, activity.savedIds])
 
   // Real-time Topic Mastery Breakdown
@@ -942,11 +986,12 @@ export default function App() {
     ]
 
     return list.map(item => {
-      const count = activity.completedIds.filter(id => {
+      const targetTopic = (item.topic || '').toLowerCase()
+      const count = (activity.completedIds || []).filter(id => {
         const found = allResources.find(r => r.id === id)
         return found && (
-          found.topic.toLowerCase().includes(item.topic.toLowerCase()) ||
-          (found.tags && found.tags.some(t => t.toLowerCase().includes(item.topic.toLowerCase())))
+          (found.topic || '').toLowerCase().includes(targetTopic) ||
+          normalizeTags(found.tags).some(t => (t || '').toLowerCase().includes(targetTopic))
         )
       }).length
 
@@ -992,21 +1037,23 @@ export default function App() {
       return
     }
 
-    setActivity(prev => {
-      const isSaved = prev.savedIds.includes(resId)
-      const updatedSaved = isSaved
-        ? prev.savedIds.filter(id => id !== resId)
-        : [...prev.savedIds, resId]
-      
-      const eventMsg = isSaved ? `Removed "${resTitle?.slice(0, 28)}..." from library` : `Saved "${resTitle?.slice(0, 28)}..."`
-      showToast(eventMsg, isSaved ? 'info' : 'success')
+    const isSaved = (activity.savedIds || []).includes(resId)
+    const eventMsg = isSaved ? `Removed "${(resTitle || '').slice(0, 28)}..." from library` : `Saved "${(resTitle || '').slice(0, 28)}..."`
+    showToast(eventMsg, isSaved ? 'info' : 'success')
 
+    setActivity(prev => {
+      const prevSaved = prev.savedIds || []
+      const currentlySaved = prevSaved.includes(resId)
+      const updatedSaved = currentlySaved
+        ? prevSaved.filter(id => id !== resId)
+        : [...prevSaved, resId]
+      
       return {
         ...prev,
         savedIds: updatedSaved,
         recentEvents: [
-          { id: Date.now(), title: eventMsg, time: 'Just now', icon: isSaved ? '✕' : '🔖' },
-          ...prev.recentEvents.slice(0, 5)
+          { id: getEventTimestamp(), title: eventMsg, time: 'Just now', icon: isSaved ? '✕' : '🔖' },
+          ...(prev.recentEvents || []).slice(0, 5)
         ]
       }
     })
@@ -1020,28 +1067,31 @@ export default function App() {
       return
     }
 
-    setActivity(prev => {
-      const isDone = prev.completedIds.includes(resId)
-      const updatedDone = isDone
-        ? prev.completedIds.filter(id => id !== resId)
-        : [...prev.completedIds, resId]
+    const isDone = (activity.completedIds || []).includes(resId)
+    const eventMsg = isDone ? `Unmarked "${(resTitle || '').slice(0, 28)}..."` : `Completed "${(resTitle || '').slice(0, 28)}..."`
+    showToast(eventMsg, isDone ? 'info' : 'success')
 
-      const eventMsg = isDone ? `Unmarked "${resTitle?.slice(0, 28)}..."` : `Completed "${resTitle?.slice(0, 28)}..."`
-      showToast(eventMsg, isDone ? 'info' : 'success')
+    setActivity(prev => {
+      const prevDone = prev.completedIds || []
+      const currentlyDone = prevDone.includes(resId)
+      const updatedDone = currentlyDone
+        ? prevDone.filter(id => id !== resId)
+        : [...prevDone, resId]
 
       return {
         ...prev,
         completedIds: updatedDone,
-        hoursSpent: isDone ? Math.max(0, prev.hoursSpent - 3.5) : prev.hoursSpent + 3.5,
+        hoursSpent: currentlyDone ? Math.max(0, (prev.hoursSpent || 0) - 3.5) : (prev.hoursSpent || 0) + 3.5,
         recentEvents: [
-          { id: Date.now(), title: eventMsg, time: 'Just now', icon: '✓' },
-          ...prev.recentEvents.slice(0, 5)
+          { id: getEventTimestamp(), title: eventMsg, time: 'Just now', icon: '✓' },
+          ...(prev.recentEvents || []).slice(0, 5)
         ]
       }
     })
   }
 
   const handleStartLearning = (resource) => {
+    if (!resource) return
     setActiveCourse({
       ...resource,
       progress: 25,
@@ -1050,14 +1100,14 @@ export default function App() {
     if (currentUser) {
       setActivity(prev => ({
         ...prev,
-        sessionsCount: prev.sessionsCount + 1,
+        sessionsCount: (prev.sessionsCount || 0) + 1,
         recentEvents: [
-          { id: Date.now(), title: `Started learning "${resource.title.slice(0, 28)}..."`, time: 'Just now', icon: '⚡' },
-          ...prev.recentEvents.slice(0, 5)
+          { id: getEventTimestamp(), title: `Started learning "${(resource.title || '').slice(0, 28)}..."`, time: 'Just now', icon: '⚡' },
+          ...(prev.recentEvents || []).slice(0, 5)
         ]
       }))
     }
-    showToast(`Launching "${resource.title.slice(0, 30)}..."`, 'info')
+    showToast(`Launching "${(resource.title || '').slice(0, 30)}..."`, 'info')
     if (resource.url) {
       window.open(resource.url, '_blank', 'noopener,noreferrer')
     }
@@ -1099,6 +1149,34 @@ export default function App() {
     setSortBy('relevance')
     setSearchQuery('')
     showToast("Preferences restored to initial defaults.", "info")
+  }
+
+  const handleDangerZoneReset = () => {
+    setPreferences({
+      handsOnTheory: 70,
+      projectBased: 80,
+      contentLength: 'Medium (3-10 hrs)',
+      adaptiveDifficulty: true,
+      freeOnly: false,
+      certificationTrack: true
+    })
+    setSelectedTopic('all')
+    setSelectedDifficulty('all')
+    setSelectedFormat('all')
+    setSelectedPricing('all')
+    setSortBy('relevance')
+    setSearchQuery('')
+    setActivity({
+      completedIds: [],
+      savedIds: [],
+      ratings: {},
+      sessionsCount: 0,
+      streakDays: 0,
+      hoursSpent: 0,
+      recentEvents: []
+    })
+    setActiveCourse(null)
+    showToast("All activity, course progress, and preferences have been reset.", "info")
   }
 
   return (
@@ -1380,7 +1458,7 @@ export default function App() {
                   title="View Learner Profile"
                 >
                   <div className="user-avatar-circle">
-                    {(currentUser.name || currentUser.username).slice(0, 2).toUpperCase()}
+                    {getInitials(currentUser.name || currentUser.username, 'LQ')}
                   </div>
                   <div style={{ textAlign: 'left' }}>
                     <div style={{ fontSize: '0.8rem', fontWeight: 700, color: '#fff' }}>{currentUser.name}</div>
@@ -1583,10 +1661,13 @@ export default function App() {
 
                   <div className="continue-progress-wrap">
                     <div className="continue-progress-bar">
-                      <div className="continue-progress-fill" style={{ width: `${activeCourse.progress || 35}%` }}></div>
+                      <div
+                        className="continue-progress-fill"
+                        style={{ width: `${(activity.completedIds || []).includes(activeCourse.id) ? 100 : (activeCourse.progress || 25)}%` }}
+                      ></div>
                     </div>
                     <span style={{ fontSize: '0.78rem', fontFamily: 'var(--font-mono)', fontWeight: 700, color: '#34d399' }}>
-                      {activeCourse.progress || 35}% In-Progress
+                      {(activity.completedIds || []).includes(activeCourse.id) ? '100% Completed' : `${activeCourse.progress || 25}% In-Progress`}
                     </span>
                   </div>
                 </div>
@@ -1788,7 +1869,7 @@ export default function App() {
                   <button
                     key={sk}
                     type="button"
-                    className={`chip ${targetSkill.toLowerCase() === sk.toLowerCase() ? 'selected' : ''}`}
+                    className={`chip ${(targetSkill || '').toLowerCase() === (sk || '').toLowerCase() ? 'selected' : ''}`}
                     style={{ fontSize: '0.72rem', padding: '0.2rem 0.65rem' }}
                     onClick={() => handleSetTargetSkill(sk)}
                   >
@@ -1820,7 +1901,7 @@ export default function App() {
             {/* 4 Multi-Stage Visual Cards */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {roadmapStages.map((stage) => {
-                const stageDoneCount = stage.courses.filter(c => activity.completedIds.includes(c.id)).length
+                const stageDoneCount = stage.courses.filter(c => (activity.completedIds || []).includes(c.id)).length
                 const stageTotal = stage.courses.length
                 const stagePct = stageTotal > 0 ? Math.round((stageDoneCount / stageTotal) * 100) : 0
                 const isStageComplete = stageTotal > 0 && stageDoneCount === stageTotal
@@ -2490,7 +2571,7 @@ export default function App() {
                     </div>
 
                     <div className="card-tags-row">
-                      {(res.tags || []).slice(0, 3).map((tag, tIdx) => (
+                      {normalizeTags(res.tags).slice(0, 3).map((tag, tIdx) => (
                         <span key={tIdx} className="card-tag">{tag}</span>
                       ))}
                     </div>
@@ -2616,10 +2697,10 @@ export default function App() {
                       </button>
                       <button
                         type="button"
-                        className={`btn-icon-subtle ${activity.completedIds.includes(res.id) ? 'active-done' : ''}`}
+                        className={`btn-icon-subtle ${(activity.completedIds || []).includes(res.id) ? 'active-done' : ''}`}
                         onClick={() => toggleCompleteResource(res.id, res.title)}
                       >
-                        {activity.completedIds.includes(res.id) ? '✓ Completed' : 'Mark Done'}
+                        {(activity.completedIds || []).includes(res.id) ? '✓ Completed' : 'Mark Done'}
                       </button>
                     </div>
                   </article>
@@ -2656,15 +2737,15 @@ export default function App() {
                     Track your journey toward mastering <strong>{targetSkill || profile.goal}</strong>.
                   </p>
                 </div>
-                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: activity.completedIds.length > 0 ? '#10b981' : '#94a3b8' }}>
-                  {activity.completedIds.length} / {Math.max(8, roadmapCoursesList.length)} Completed ({Math.min(100, Math.round((activity.completedIds.length / Math.max(8, roadmapCoursesList.length)) * 100))}%)
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: roadmapCompletedCoursesCount > 0 ? '#10b981' : '#94a3b8' }}>
+                  {roadmapCompletedCoursesCount} / {roadmapTotalCoursesCount} Completed ({roadmapProgressPercent}%)
                 </div>
               </div>
 
               <div className="roadmap-progress-bar-container" style={{ height: '12px' }}>
                 <div
                   className="roadmap-progress-bar-fill"
-                  style={{ width: `${Math.min(100, Math.round((activity.completedIds.length / Math.max(8, roadmapCoursesList.length)) * 100))}%` }}
+                  style={{ width: `${roadmapProgressPercent}%` }}
                 />
               </div>
 
@@ -2731,7 +2812,13 @@ export default function App() {
                         type="text"
                         className="auth-input"
                         value={profile.name}
-                        onChange={(e) => setProfile(p => ({ ...p, name: e.target.value }))}
+                        onChange={(e) => {
+                          const newName = e.target.value
+                          setProfile(p => ({ ...p, name: newName }))
+                          if (currentUser) {
+                            setCurrentUser(u => ({ ...u, name: newName }))
+                          }
+                        }}
                       />
                     </div>
 
@@ -2794,7 +2881,7 @@ export default function App() {
                   type="button"
                   className="btn btn-secondary"
                   style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)' }}
-                  onClick={handleResetPreferences}
+                  onClick={handleDangerZoneReset}
                 >
                   Reset All Settings to Factory Defaults
                 </button>
@@ -3033,7 +3120,7 @@ export default function App() {
                   toggleSaveResource(modalResource.id, modalResource.title)
                 }}
               >
-                {activity.savedIds.includes(modalResource.id) ? '★ Saved in Library' : '🔖 Bookmark Resource'}
+                {(activity.savedIds || []).includes(modalResource.id) ? '★ Saved in Library' : '🔖 Bookmark Resource'}
               </button>
 
               <button

@@ -37,3 +37,6 @@ learning_platform.db
 # OS
 .DS_Store
 Thumbs.db
+
+# Agent records
+.agents/
