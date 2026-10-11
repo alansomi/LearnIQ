@@ -59,15 +59,23 @@ class ContentBasedRecommender:
             boost[~same_level] *= 0.80
             
         if preferred_type:
-            same_type = (self._id_index["type"] == preferred_type).reindex(scores.index)
-            # Massive boost to the preferred format
-            boost[same_type] *= 3.0
-            # Massive penalty to non-preferred formats so they only show if nothing else exists
-            boost[~same_type] *= 0.1
+            pref = str(preferred_type).strip().lower()
+            if pref == "course":
+                # Course matches Video, Tutorial, or any course-format resource
+                same_type = self._id_index["type"].str.lower().isin(["course", "video", "tutorial"]).reindex(scores.index, fill_value=False)
+                boost[same_type] *= 1.4
+                boost[~same_type] *= 0.8
+            else:
+                same_type = (self._id_index["type"].str.lower() == pref).reindex(scores.index, fill_value=False)
+                boost[same_type] *= 2.0
+                boost[~same_type] *= 0.6
 
         scores = scores * boost
         if scores.max() > 0:
             scores = scores / scores.max()
+        else:
+            base_ratings = self._id_index["rating"].reindex(scores.index).fillna(4.0)
+            scores = base_ratings / 5.0
         return scores
 
 
@@ -88,10 +96,7 @@ class CollaborativeRecommender:
             index="student_id", columns="resource_id",
             values="effective_rating", aggfunc="mean", fill_value=0,
         )
-        for rid in self.resource_ids:
-            if rid not in pivot.columns:
-                pivot[rid] = 0
-        pivot = pivot[self.resource_ids]
+        pivot = pivot.reindex(columns=self.resource_ids, fill_value=0)
         self.matrix_df = pivot
 
         n_components = min(10, min(pivot.shape) - 1)

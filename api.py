@@ -116,14 +116,23 @@ def log_interaction(interaction: InteractionCreate):
                     name=f"Learner_{interaction.student_id[:8]}",
                     skill_level="Beginner",
                     interest="General Technology",
-                    preferred_type="Video"
+                    preferred_type="Course"
                 )
                 session.add(placeholder_student)
                 session.flush()
 
+        # Clean resource ID (strip 'cloud-' prefix if passed from frontend)
+        clean_rid = interaction.resource_id.replace("cloud-", "")
+        resource = session.query(Resource).filter(Resource.id == clean_rid).first()
+        if not resource:
+            resource = session.query(Resource).filter(Resource.id == interaction.resource_id).first()
+        
+        if not resource:
+            return {"status": "skipped", "message": "Resource not found in catalog, interaction skipped."}
+
         new_interaction = Interaction(
             student_id=interaction.student_id,
-            resource_id=interaction.resource_id,
+            resource_id=resource.id,
             interaction_type=interaction.interaction_type,
             rating=interaction.rating
         )
@@ -137,7 +146,7 @@ def log_interaction(interaction: InteractionCreate):
         session.close()
 
 @app.get("/recommendations/{student_id}")
-def get_recommendations(student_id: str, top_n: int = 5):
+def get_recommendations(student_id: str, top_n: int = 6):
     session = get_session()
     try:
         student = session.query(Student).filter(Student.id == student_id).first()
@@ -179,5 +188,40 @@ def get_recommendations(student_id: str, top_n: int = 5):
     finally:
         session.close()
 
-    return {"recommendations": recs.to_dict(orient="records")}
+    # Format recommendations for frontend consumption
+    formatted = []
+    for _, row in recs.iterrows():
+        raw_score = float(row.get("score", 0.85))
+        # Consumer friendly match percentage (e.g. 78% - 98%)
+        relevance_pct = min(99, max(72, int(raw_score * 100) if raw_score <= 1.0 else int(raw_score)))
+        
+        # Plain-English non-math reason
+        raw_reason = str(row.get("reason", ""))
+        if "similar learners" in raw_reason:
+            clean_reason = "Recommended by similar learners on your path"
+        elif "profile match" in raw_reason or "content match" in raw_reason:
+            clean_reason = f"Matches your interest in {row.get('topic', 'this subject')}"
+        else:
+            clean_reason = f"Calibrated for your {student_dict.get('skill_level', 'learning')} level"
+
+        tags_val = row.get("tags", "")
+        tags_list = [t.strip() for t in tags_val.split() if t.strip()] if isinstance(tags_val, str) else tags_val
+
+        formatted.append({
+            "id": row["id"],
+            "title": row["title"],
+            "topic": row.get("topic", "Technology"),
+            "type": row.get("type", "Course"),
+            "difficulty": row.get("difficulty", "Beginner"),
+            "tags": tags_list,
+            "description": row.get("description", ""),
+            "url": row.get("url", ""),
+            "source": row.get("source", "LearnIQ Catalog"),
+            "provider": row.get("source", "LearnIQ Catalog"),
+            "rating": float(row.get("rating", 4.5)),
+            "relevanceScore": relevance_pct,
+            "whyRecommended": clean_reason
+        })
+
+    return {"recommendations": formatted}
 

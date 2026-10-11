@@ -503,6 +503,10 @@ export default function App() {
   const [cloudConnected, setCloudConnected] = useState(false)
   const [cloudWakingUp, setCloudWakingUp] = useState(false)
 
+  // AI Recommender Engine State (powered by FastAPI & Hybrid ML)
+  const [aiRecs, setAiRecs] = useState([])
+  const [isAiLoading, setIsAiLoading] = useState(false)
+
   // Filters & Sorting for Recommendations
   const [selectedTopic, setSelectedTopic] = useState('all')
   const [selectedDifficulty, setSelectedDifficulty] = useState('all')
@@ -517,6 +521,45 @@ export default function App() {
   const [notificationOpen, setNotificationOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [toasts, setToasts] = useState([])
+
+  // Helper to log user interactions back to backend database
+  const logInteractionToBackend = (resourceId, interactionType, rating = null) => {
+    if (!currentUser || !resourceId) return
+    const cleanId = String(resourceId).replace(/^cloud-/, '')
+    const studentIdentifier = currentUser.backendStudentId || currentUser.id || currentUser.username || currentUser.name
+    fetch(`${API_BASE}/interactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        student_id: String(studentIdentifier),
+        resource_id: String(cleanId),
+        interaction_type: interactionType,
+        rating: rating ? Number(rating) : null
+      })
+    }).catch(() => {})
+  }
+
+  // Fetch AI Recommendations from Render Backend
+  const fetchAiRecommendations = (userObj) => {
+    const studentUser = userObj || currentUser
+    if (!studentUser) return
+    const studentIdentifier = studentUser.backendStudentId || studentUser.id || studentUser.username || studentUser.name
+    if (!studentIdentifier) return
+
+    setIsAiLoading(true)
+    fetch(`${API_BASE}/recommendations/${encodeURIComponent(studentIdentifier)}?top_n=8`)
+      .then(res => {
+        if (!res.ok) throw new Error('Render API offline')
+        return res.json()
+      })
+      .then(data => {
+        if (data && Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+          setAiRecs(data.recommendations)
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsAiLoading(false))
+  }
 
   // ------------------------------------------------------------------------
   // Sync Active User State back into accounts database in localStorage
@@ -685,7 +728,20 @@ export default function App() {
         interest: resolvedSkill || 'Machine Learning',
         preferred_type: 'Course'
       })
-    }).catch(() => {})
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.student_id) {
+          const accs = getStoredAccounts()
+          if (accs[cleanUsername]) {
+            accs[cleanUsername].backendStudentId = data.student_id
+            saveStoredAccounts(accs)
+          }
+          setCurrentUser(prev => prev ? { ...prev, backendStudentId: data.student_id } : prev)
+          fetchAiRecommendations({ ...newAccount, backendStudentId: data.student_id })
+        }
+      })
+      .catch(() => {})
   }
 
   const handleLogin = (username, password) => {
@@ -734,6 +790,35 @@ export default function App() {
     setAuthError('')
     setAuthForm({ name: '', username: '', password: '', targetSkill: '' })
     showToast(`Welcome back, ${account.name || cleanUsername}!`, 'success')
+
+    // Fetch live AI recommendations for this student
+    if (!account.backendStudentId) {
+      fetch(`${API_BASE}/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: account.name || cleanUsername,
+          skill_level: account.profile?.experience || 'Beginner',
+          interest: account.targetSkill || account.profile?.goal || 'Machine Learning',
+          preferred_type: 'Course'
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.student_id) {
+            const accs = getStoredAccounts()
+            if (accs[cleanUsername]) {
+              accs[cleanUsername].backendStudentId = data.student_id
+              saveStoredAccounts(accs)
+            }
+            setCurrentUser(prev => prev ? { ...prev, backendStudentId: data.student_id } : prev)
+            fetchAiRecommendations({ ...account, backendStudentId: data.student_id })
+          }
+        })
+        .catch(() => {})
+    } else {
+      fetchAiRecommendations(account)
+    }
   }
 
   const handleLogout = () => {
@@ -859,6 +944,26 @@ export default function App() {
       interests: p.interests.includes(s) ? p.interests : [s, ...p.interests]
     }))
     showToast(`Dynamic roadmap generated for ${s}!`, 'success')
+
+    if (currentUser) {
+      fetch(`${API_BASE}/students`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: currentUser.name || currentUser.username,
+          skill_level: profile.experience || 'Beginner',
+          interest: s || 'Machine Learning',
+          preferred_type: 'Course'
+        })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.student_id) {
+            fetchAiRecommendations({ ...currentUser, backendStudentId: data.student_id })
+          }
+        })
+        .catch(() => {})
+    }
   }
 
   // ------------------------------------------------------------------------
@@ -872,6 +977,21 @@ export default function App() {
     const activeSkill = (targetSkill || '').toLowerCase()
 
     return allResources.map(resource => {
+      // Check if this resource was specifically scored by the live AI backend
+      const cleanId = String(resource.id).replace(/^cloud-/, '')
+      const aiMatch = (aiRecs || []).find(r =>
+        String(r.id).replace(/^cloud-/, '') === cleanId ||
+        (r.title && resource.title && r.title.trim().toLowerCase() === resource.title.trim().toLowerCase())
+      )
+
+      if (aiMatch) {
+        return {
+          ...resource,
+          relevanceScore: aiMatch.relevanceScore || 95,
+          whyRecommended: aiMatch.whyRecommended || `AI recommended for your journey in ${resource.topic}`
+        }
+      }
+
       let relevanceScore = 65 // baseline suitability
       const reasons = []
 
@@ -899,7 +1019,7 @@ export default function App() {
 
       // Format Match
       const resType = (resource.type || '').toLowerCase()
-      if (resType === userFormat || userFormat === 'mixed') {
+      if (resType === userFormat || userFormat === 'mixed' || (userFormat === 'course' && (resType === 'video' || resType === 'tutorial' || resType === 'course'))) {
         relevanceScore += 8
         reasons.push(`Matches your preferred ${profile.format} format`)
       }
@@ -927,7 +1047,7 @@ export default function App() {
         whyRecommended: primaryExplanation
       }
     })
-  }, [allResources, profile, preferences, targetSkill])
+  }, [allResources, profile, preferences, targetSkill, aiRecs])
 
   // Filtered & Sorted Resources for Recommendation Page
   const displayedRecommendations = useMemo(() => {
@@ -952,7 +1072,14 @@ export default function App() {
     }
 
     if (selectedFormat !== 'all') {
-      list = list.filter(r => (r.type || '').toLowerCase() === (selectedFormat || '').toLowerCase())
+      const sf = (selectedFormat || '').toLowerCase()
+      list = list.filter(r => {
+        const rt = (r.type || '').toLowerCase()
+        if (sf === 'course') {
+          return rt === 'course' || rt === 'video' || rt === 'tutorial'
+        }
+        return rt === sf
+      })
     }
 
     if (selectedPricing === 'free') {
@@ -1041,6 +1168,9 @@ export default function App() {
     const eventMsg = isSaved ? `Removed "${(resTitle || '').slice(0, 28)}..." from library` : `Saved "${(resTitle || '').slice(0, 28)}..."`
     showToast(eventMsg, isSaved ? 'info' : 'success')
 
+    // Feed interaction back to backend AI model
+    logInteractionToBackend(resId, isSaved ? 'Viewed' : 'Liked')
+
     setActivity(prev => {
       const prevSaved = prev.savedIds || []
       const currentlySaved = prevSaved.includes(resId)
@@ -1071,6 +1201,9 @@ export default function App() {
     const eventMsg = isDone ? `Unmarked "${(resTitle || '').slice(0, 28)}..."` : `Completed "${(resTitle || '').slice(0, 28)}..."`
     showToast(eventMsg, isDone ? 'info' : 'success')
 
+    // Feed completion back to backend AI model
+    logInteractionToBackend(resId, isDone ? 'Viewed' : 'Completed')
+
     setActivity(prev => {
       const prevDone = prev.completedIds || []
       const currentlyDone = prevDone.includes(resId)
@@ -1098,6 +1231,8 @@ export default function App() {
       currentLesson: 'Module 1: Principles & Fundamentals'
     })
     if (currentUser) {
+      // Feed click signal back to backend AI model
+      logInteractionToBackend(resource.id, 'Clicked')
       setActivity(prev => ({
         ...prev,
         sessionsCount: (prev.sessionsCount || 0) + 1,
@@ -1121,6 +1256,9 @@ export default function App() {
       return
     }
 
+    // Feed explicit rating signal back to backend AI model
+    logInteractionToBackend(resId, 'Liked', rating)
+
     setActivity(prev => ({
       ...prev,
       ratings: { ...prev.ratings, [resId]: rating }
@@ -1130,6 +1268,9 @@ export default function App() {
 
   const handleGenerateRecommendations = () => {
     setActiveSection('recommendations')
+    if (currentUser) {
+      fetchAiRecommendations(currentUser)
+    }
     showToast("Recommendations personalized for your profile!", "success")
   }
 
@@ -2495,6 +2636,8 @@ export default function App() {
                   </button>
                   <span style={{ fontSize: '0.78rem', color: '#94a3b8', marginLeft: '0.5rem' }}>
                     Showing <strong>{displayedRecommendations.length}</strong> personalized resources
+                    {aiRecs.length > 0 && <span style={{ color: '#38bdf8', marginLeft: '0.35rem' }}>• ⚡ AI Optimized</span>}
+                    {isAiLoading && <span style={{ color: '#a855f7', marginLeft: '0.35rem' }}>• 🔄 Syncing...</span>}
                   </span>
 
                   {/* Quick roadmap generator from search query */}
