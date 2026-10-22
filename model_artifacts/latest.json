@@ -1,8 +1,8 @@
 {
-  "trained_at": "20261022T060402701260Z",
-  "model_file": "hybrid_model_20261022T060402701260Z.joblib",
+  "trained_at": "20261022T060616384416Z",
+  "model_file": "hybrid_model_20261022T060616384416Z.joblib",
   "n_resources": 300,
   "n_interactions": 107,
   "n_students_with_interactions": 19,
-  "train_seconds": 0.05
+  "train_seconds": 0.04
 }
